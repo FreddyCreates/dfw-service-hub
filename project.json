@@ -1,0 +1,25 @@
+{
+  "overview": "A polished multi-vendor service marketplace for the Dallas-Fort Worth area with trust protocols, rewards, AI matching, provider microsites, and a documentation hub.",
+  "features": [
+    "Multi-vendor service marketplace for DFW area",
+    "Provider microsites with AI generation",
+    "Trust scores and multi-tier verification protocols",
+    "Dispute and escalation flows",
+    "User rewards, loyalty tiers, and achievement badges",
+    "AI provider matching engine",
+    "Conversational AI assistant",
+    "Documentation hub",
+    "Provider SaaS business hub with analytics"
+  ],
+  "category": "productivity",
+  "tags": [
+    "marketplace",
+    "service",
+    "dfw",
+    "ai",
+    "trust",
+    "rewards",
+    "provider-hub"
+  ],
+  "last_updated": "2026-07-23T15:17:13.137Z"
+}
