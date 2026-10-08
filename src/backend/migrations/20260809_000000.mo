@@ -1,19 +1,13 @@
-// Migration: add emailNotificationsEnabled stable variable.
+// Migration: add the identity-attributes layer to the DFW marketplace.
 //
-// Admin-gated master toggle for transactional email notifications. When false,
-// every email helper skips sending silently. Defaults to true on upgrade.
+// OldActor matches the NewActor of migrations/20260722_000000.mo (the deployed
+// marketplace state). NewActor adds a single new stable field — `identities` —
+// keyed by Principal. All existing marketplace state (accessControlState, the 7
+// stable Map collections, all ID counters, openAIApiKey) is preserved exactly.
 //
-// OldActor matches the previously-deployed NewActor (20260722_055940.mo): all
-// marketplace collections, next*Id counters, openAIApiKey, and the User type
-// with workPhotos — but NO emailNotificationsEnabled.
-//
-// NewActor = OldActor + emailNotificationsEnabled : { var value : Bool }.
-// The migration function preserves every existing field and sets
-// emailNotificationsEnabled = { var value = true }.
-//
-// Self-contained: only mo:core/... and mo:caffeineai-authorization/...
-// imports. All types inlined so this frozen migration does not drift if the
-// actor's types change in a later version.
+// Self-contained: only mo:core/... and mo:caffeineai-authorization/... imports.
+// All types inlined so this frozen migration does not drift if the actor's
+// types change in a later version.
 
 import Map "mo:core/Map";
 import AccessControl "mo:caffeineai-authorization/access-control";
@@ -21,7 +15,8 @@ import Principal "mo:core/Principal";
 import Time "mo:core/Time";
 
 module {
-  // ---- Old actor state (matches 20260722_055940 NewActor) ----
+  // ---- Old actor state (DFW marketplace, pre-auth-domain) ----
+  // Inlined from migrations/20260722_000000.mo's NewActor.
   type ServiceCategory = {
     #boxTruck;
     #relocation;
@@ -57,15 +52,13 @@ module {
     #admin;
   };
 
-  // Old User (with workPhotos field, as deployed by 20260722_055940).
-  type OldUser = {
+  type User = {
     principal : Principal;
     role : MarketplaceRole;
     displayName : Text;
     email : ?Text;
     phone : ?Text;
     avatar : ?Blob;
-    workPhotos : [Blob];
     createdAt : Time.Time;
     updatedAt : Time.Time;
   };
@@ -150,7 +143,7 @@ module {
 
   type OldActor = {
     accessControlState : AccessControl.AccessControlState;
-    users : Map.Map<Principal, OldUser>;
+    users : Map.Map<Principal, User>;
     providers : Map.Map<Nat, Provider>;
     listings : Map.Map<Nat, ServiceListing>;
     bookings : Map.Map<Nat, Booking>;
@@ -166,23 +159,26 @@ module {
     openAIApiKey : { var value : ?Text };
   };
 
-  // ---- New actor state ----
-  // NewUser is unchanged from OldUser (workPhotos already present).
-  type NewUser = {
+  // ---- New actor state (DFW marketplace + identity-attributes layer) ----
+  // IdentityAttributes is inlined here so this frozen migration does not drift.
+  type IdentitySource = {
+    #internetIdentity;
+    #google;
+    #email;
+  };
+
+  type IdentityAttributes = {
     principal : Principal;
-    role : MarketplaceRole;
-    displayName : Text;
+    displayName : ?Text;
     email : ?Text;
-    phone : ?Text;
-    avatar : ?Blob;
-    workPhotos : [Blob];
-    createdAt : Time.Time;
-    updatedAt : Time.Time;
+    source : IdentitySource;
+    firstSeenAt : Nat;
+    lastSeenAt : Nat;
   };
 
   type NewActor = {
     accessControlState : AccessControl.AccessControlState;
-    users : Map.Map<Principal, NewUser>;
+    users : Map.Map<Principal, User>;
     providers : Map.Map<Nat, Provider>;
     listings : Map.Map<Nat, ServiceListing>;
     bookings : Map.Map<Nat, Booking>;
@@ -196,12 +192,14 @@ module {
     nextMessageId : { var value : Nat };
     nextSlotId : { var value : Nat };
     openAIApiKey : { var value : ?Text };
-    emailNotificationsEnabled : { var value : Bool };
+    identities : Map.Map<Principal, IdentityAttributes>;
   };
 
   public func migration(old : OldActor) : NewActor {
-    // Preserve every existing field unchanged; initialize the new
-    // emailNotificationsEnabled toggle to true (notifications on by default).
+    // Preserve every existing field exactly; seed the new identities collection
+    // empty. Existing marketplace users will have their identity attributes
+    // recorded on their next sign-in (the MixinAuthorization callback fires
+    // once per sign-in with the verified attribute bundle).
     {
       accessControlState = old.accessControlState;
       users = old.users;
@@ -218,7 +216,7 @@ module {
       nextMessageId = old.nextMessageId;
       nextSlotId = old.nextSlotId;
       openAIApiKey = old.openAIApiKey;
-      emailNotificationsEnabled = { var value = true };
+      identities = Map.empty();
     };
   };
 };

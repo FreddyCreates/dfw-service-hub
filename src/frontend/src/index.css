@@ -24,137 +24,49 @@
 }
 
 :root {
-  /* Workshop V3 — light mode (customer-facing). OKLCH tokens MUST be wrapped
-     in oklch() for Tailwind v3.4.17 to resolve them; raw channel triples
-     render as black. Refined for AA+ contrast and consistent rhythm. */
-  --background: oklch(0.97 0.012 75);
-  --foreground: oklch(0.18 0.02 250);
-  --card: oklch(0.99 0.006 75);
-  --card-foreground: oklch(0.18 0.02 250);
-  --popover: oklch(0.99 0.006 75);
-  --popover-foreground: oklch(0.18 0.02 250);
-  --primary: oklch(0.42 0.16 250);
-  --primary-foreground: oklch(0.97 0.006 250);
-  --secondary: oklch(0.93 0.015 75);
-  --secondary-foreground: oklch(0.28 0.025 250);
-  --muted: oklch(0.93 0.015 75);
-  --muted-foreground: oklch(0.46 0.018 250);
-  --accent: oklch(0.66 0.14 55);
-  --accent-foreground: oklch(0.18 0.03 55);
-  --destructive: oklch(0.5 0.2 25);
-  --destructive-foreground: oklch(0.97 0.006 25);
-  --success: oklch(0.55 0.15 150);
-  --success-foreground: oklch(0.97 0.006 150);
-  --warning: oklch(0.72 0.15 75);
-  --warning-foreground: oklch(0.2 0.03 75);
-  --border: oklch(0.88 0.018 75);
-  --input: oklch(0.88 0.018 75);
-  --ring: oklch(0.42 0.16 250);
-  --chart-1: oklch(0.42 0.16 250);
-  --chart-2: oklch(0.66 0.14 55);
-  --chart-3: oklch(0.55 0.15 150);
-  --chart-4: oklch(0.72 0.15 75);
-  --chart-5: oklch(0.5 0.2 25);
-  --sidebar: oklch(0.95 0.012 75);
-  --sidebar-foreground: oklch(0.18 0.02 250);
-  --sidebar-primary: oklch(0.42 0.16 250);
-  --sidebar-primary-foreground: oklch(0.97 0.006 250);
-  --sidebar-accent: oklch(0.66 0.14 55);
-  --sidebar-accent-foreground: oklch(0.18 0.03 55);
-  --sidebar-border: oklch(0.88 0.018 75);
-  --sidebar-ring: oklch(0.42 0.16 250);
-
-  /* Trust-badge tokens — embedded protocol surfaces */
-  --trust-verified: oklch(0.55 0.15 150);
-  --trust-verified-foreground: oklch(0.97 0.006 150);
-  --trust-verified-bg: oklch(0.94 0.04 150);
-  --trust-checked: oklch(0.42 0.16 250);
-  --trust-checked-foreground: oklch(0.97 0.006 250);
-  --trust-checked-bg: oklch(0.92 0.04 250);
-  --trust-bound: oklch(0.66 0.14 55);
-  --trust-bound-foreground: oklch(0.18 0.03 55);
-  --trust-bound-bg: oklch(0.93 0.05 55);
-  --trust-pending: oklch(0.72 0.15 75);
-  --trust-pending-foreground: oklch(0.2 0.03 75);
-  --trust-pending-bg: oklch(0.94 0.05 75);
-
-  /* Verification-tier tokens — provider credibility ladder */
-  --verify-basic: oklch(0.62 0.02 75);
-  --verify-basic-foreground: oklch(0.2 0.01 75);
-  --verify-basic-bg: oklch(0.93 0.01 75);
-  --verify-confirmed: oklch(0.42 0.16 250);
-  --verify-confirmed-foreground: oklch(0.97 0.006 250);
-  --verify-confirmed-bg: oklch(0.92 0.04 250);
-  --verify-guaranteed: oklch(0.55 0.15 150);
-  --verify-guaranteed-foreground: oklch(0.97 0.006 150);
-  --verify-guaranteed-bg: oklch(0.94 0.04 150);
-
-  /* Rewards-tier tokens — loyalty/gamification ladder */
-  --tier-bronze: oklch(0.55 0.08 55);
-  --tier-bronze-foreground: oklch(0.97 0.02 55);
-  --tier-bronze-bg: oklch(0.9 0.03 55);
-  --tier-silver: oklch(0.62 0.02 250);
-  --tier-silver-foreground: oklch(0.15 0.01 250);
-  --tier-silver-bg: oklch(0.92 0.01 250);
-  --tier-gold: oklch(0.74 0.13 80);
-  --tier-gold-foreground: oklch(0.22 0.04 80);
-  --tier-gold-bg: oklch(0.93 0.06 80);
-  --tier-platinum: oklch(0.5 0.12 280);
-  --tier-platinum-foreground: oklch(0.97 0.01 280);
-  --tier-platinum-bg: oklch(0.9 0.05 280);
-
-  /* Focus-ring tokens — accessible, visible on cream & ink */
-  --focus-ring: oklch(0.42 0.16 250);
-  --focus-ring-offset: oklch(0.97 0.012 75);
-  --focus-ring-width: 2px;
-  --focus-ring-offset-width: 2px;
-
+  /* Workshop — light mode (primary) */
+  --background: 0.97 0.012 75;
+  --foreground: 0.18 0.02 250;
+  --card: 0.99 0.006 75;
+  --card-foreground: 0.18 0.02 250;
+  --popover: 0.99 0.006 75;
+  --popover-foreground: 0.18 0.02 250;
+  --primary: 0.42 0.16 250;
+  --primary-foreground: 0.97 0.006 250;
+  --secondary: 0.93 0.015 75;
+  --secondary-foreground: 0.28 0.025 250;
+  --muted: 0.93 0.015 75;
+  --muted-foreground: 0.5 0.018 250;
+  --accent: 0.66 0.14 55;
+  --accent-foreground: 0.18 0.03 55;
+  --destructive: 0.5 0.2 25;
+  --destructive-foreground: 0.97 0.006 25;
+  --success: 0.55 0.15 150;
+  --success-foreground: 0.97 0.006 150;
+  --warning: 0.72 0.15 75;
+  --warning-foreground: 0.2 0.03 75;
+  --border: 0.88 0.018 75;
+  --input: 0.88 0.018 75;
+  --ring: 0.42 0.16 250;
+  --chart-1: 0.42 0.16 250;
+  --chart-2: 0.66 0.14 55;
+  --chart-3: 0.55 0.15 150;
+  --chart-4: 0.72 0.15 75;
+  --chart-5: 0.5 0.2 25;
+  --sidebar: 0.95 0.012 75;
+  --sidebar-foreground: 0.18 0.02 250;
+  --sidebar-primary: 0.42 0.16 250;
+  --sidebar-primary-foreground: 0.97 0.006 250;
+  --sidebar-accent: 0.66 0.14 55;
+  --sidebar-accent-foreground: 0.18 0.03 55;
+  --sidebar-border: 0.88 0.018 75;
+  --sidebar-ring: 0.42 0.16 250;
   --font-display: "Fraunces", serif;
   --font-body: "General Sans", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
   --font-sans: "General Sans", sans-serif;
   --font-serif: "Fraunces", serif;
   --radius: 0.5rem;
-
-  /* Spacing rhythm tokens — consistent 4px base scale */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-5: 1.5rem;
-  --space-6: 2rem;
-  --space-8: 3rem;
-  --space-10: 4rem;
-  --space-12: 6rem;
-  --space-16: 8rem;
-  --section-gap: 6rem;
-  --section-gap-md: 4rem;
-  --card-pad: 1.5rem;
-  --grid-gap: 2rem;
-  --stack-tight: 0.25rem;
-  --stack-base: 1rem;
-
-  /* Typography rhythm tokens — modular scale on 1rem base (1.2 ratio) */
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 1.875rem;
-  --text-4xl: 2.25rem;
-  --text-5xl: 3rem;
-  --text-6xl: 3.75rem;
-  --text-7xl: 4.5rem;
-  --leading-tight: 1.1;
-  --leading-snug: 1.3;
-  --leading-base: 1.5;
-  --leading-relaxed: 1.7;
-  --tracking-tight: -0.02em;
-  --tracking-normal: 0em;
-  --tracking-wide: 0.05em;
-  --tracking-widest: 0.12em;
-
   --gradient-primary: linear-gradient(
     135deg,
     oklch(0.42 0.16 250) 0%,
@@ -170,20 +82,7 @@
     oklch(0.66 0.14 55) 0%,
     oklch(0.6 0.13 45) 100%
   );
-  --gradient-trust: linear-gradient(
-    135deg,
-    oklch(0.55 0.15 150) 0%,
-    oklch(0.42 0.16 250) 100%
-  );
-  --gradient-tier: linear-gradient(
-    135deg,
-    oklch(0.74 0.13 80) 0%,
-    oklch(0.5 0.12 280) 100%
-  );
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --shadow-x: 0;
   --shadow-y: 1px;
   --shadow-blur: 3px;
@@ -203,100 +102,48 @@
   --shadow-xl: 0 16px 32px -8px oklch(0.18 0.02 250 / 0.18), 0 8px 16px -4px
     oklch(0.18 0.02 250 / 0.1);
   --shadow-2xl: 0 24px 48px -12px oklch(0.18 0.02 250 / 0.25);
-  --shadow-subtle: 0 1px 2px 0px oklch(0.18 0.02 250 / 0.04);
-  --shadow-elevated: 0 12px 24px -6px oklch(0.42 0.16 250 / 0.16), 0 6px 12px
-    -4px oklch(0.18 0.02 250 / 0.1);
-  --shadow-trust: 0 4px 12px -2px oklch(0.55 0.15 150 / 0.18);
-  --shadow-tier: 0 4px 12px -2px oklch(0.74 0.13 80 / 0.2);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 }
 
 .dark {
-  /* Workshop V3 — dark mode (provider/admin portals). OKLCH tokens wrapped in
-     oklch() so Tailwind v3.4.17 resolves them. Refined for night contrast. */
-  --background: oklch(0.15 0.018 250);
-  --foreground: oklch(0.93 0.01 75);
-  --card: oklch(0.19 0.02 250);
-  --card-foreground: oklch(0.93 0.01 75);
-  --popover: oklch(0.19 0.02 250);
-  --popover-foreground: oklch(0.93 0.01 75);
-  --primary: oklch(0.7 0.14 55);
-  --primary-foreground: oklch(0.15 0.018 55);
-  --secondary: oklch(0.24 0.022 250);
-  --secondary-foreground: oklch(0.85 0.012 75);
-  --muted: oklch(0.24 0.022 250);
-  --muted-foreground: oklch(0.66 0.014 75);
-  --accent: oklch(0.62 0.12 250);
-  --accent-foreground: oklch(0.93 0.01 250);
-  --destructive: oklch(0.55 0.2 25);
-  --destructive-foreground: oklch(0.93 0.01 25);
-  --success: oklch(0.65 0.16 150);
-  --success-foreground: oklch(0.15 0.018 150);
-  --warning: oklch(0.72 0.15 75);
-  --warning-foreground: oklch(0.15 0.018 75);
-  --border: oklch(0.3 0.022 250);
-  --input: oklch(0.3 0.022 250);
-  --ring: oklch(0.7 0.14 55);
-  --chart-1: oklch(0.7 0.14 55);
-  --chart-2: oklch(0.62 0.12 250);
-  --chart-3: oklch(0.65 0.16 150);
-  --chart-4: oklch(0.72 0.15 75);
-  --chart-5: oklch(0.55 0.2 25);
-  --sidebar: oklch(0.13 0.018 250);
-  --sidebar-foreground: oklch(0.93 0.01 75);
-  --sidebar-primary: oklch(0.7 0.14 55);
-  --sidebar-primary-foreground: oklch(0.15 0.018 55);
-  --sidebar-accent: oklch(0.62 0.12 250);
-  --sidebar-accent-foreground: oklch(0.93 0.01 250);
-  --sidebar-border: oklch(0.3 0.022 250);
-  --sidebar-ring: oklch(0.7 0.14 55);
-
-  /* Trust-badge tokens — dark variants */
-  --trust-verified: oklch(0.65 0.16 150);
-  --trust-verified-foreground: oklch(0.15 0.018 150);
-  --trust-verified-bg: oklch(0.24 0.05 150);
-  --trust-checked: oklch(0.62 0.12 250);
-  --trust-checked-foreground: oklch(0.93 0.01 250);
-  --trust-checked-bg: oklch(0.24 0.05 250);
-  --trust-bound: oklch(0.7 0.14 55);
-  --trust-bound-foreground: oklch(0.15 0.018 55);
-  --trust-bound-bg: oklch(0.24 0.06 55);
-  --trust-pending: oklch(0.72 0.15 75);
-  --trust-pending-foreground: oklch(0.15 0.018 75);
-  --trust-pending-bg: oklch(0.24 0.05 75);
-
-  /* Verification-tier tokens — dark variants */
-  --verify-basic: oklch(0.7 0.02 75);
-  --verify-basic-foreground: oklch(0.15 0.01 75);
-  --verify-basic-bg: oklch(0.24 0.015 75);
-  --verify-confirmed: oklch(0.62 0.12 250);
-  --verify-confirmed-foreground: oklch(0.93 0.01 250);
-  --verify-confirmed-bg: oklch(0.24 0.05 250);
-  --verify-guaranteed: oklch(0.65 0.16 150);
-  --verify-guaranteed-foreground: oklch(0.15 0.018 150);
-  --verify-guaranteed-bg: oklch(0.24 0.05 150);
-
-  /* Rewards-tier tokens — dark variants (slightly brighter for night) */
-  --tier-bronze: oklch(0.62 0.09 55);
-  --tier-bronze-foreground: oklch(0.15 0.02 55);
-  --tier-bronze-bg: oklch(0.24 0.04 55);
-  --tier-silver: oklch(0.7 0.02 250);
-  --tier-silver-foreground: oklch(0.15 0.01 250);
-  --tier-silver-bg: oklch(0.24 0.015 250);
-  --tier-gold: oklch(0.76 0.14 80);
-  --tier-gold-foreground: oklch(0.15 0.04 80);
-  --tier-gold-bg: oklch(0.24 0.06 80);
-  --tier-platinum: oklch(0.6 0.13 280);
-  --tier-platinum-foreground: oklch(0.15 0.01 280);
-  --tier-platinum-bg: oklch(0.24 0.06 280);
-
-  /* Focus-ring tokens — dark */
-  --focus-ring: oklch(0.7 0.14 55);
-  --focus-ring-offset: oklch(0.15 0.018 250);
-  --focus-ring-width: 2px;
-  --focus-ring-offset-width: 2px;
-
+  /* Workshop — dark mode (provider/admin portals) */
+  --background: 0.15 0.018 250;
+  --foreground: 0.93 0.01 75;
+  --card: 0.19 0.02 250;
+  --card-foreground: 0.93 0.01 75;
+  --popover: 0.19 0.02 250;
+  --popover-foreground: 0.93 0.01 75;
+  --primary: 0.7 0.14 55;
+  --primary-foreground: 0.15 0.018 55;
+  --secondary: 0.24 0.022 250;
+  --secondary-foreground: 0.85 0.012 75;
+  --muted: 0.24 0.022 250;
+  --muted-foreground: 0.62 0.014 75;
+  --accent: 0.62 0.12 250;
+  --accent-foreground: 0.93 0.01 250;
+  --destructive: 0.55 0.2 25;
+  --destructive-foreground: 0.93 0.01 25;
+  --success: 0.65 0.16 150;
+  --success-foreground: 0.15 0.018 150;
+  --warning: 0.72 0.15 75;
+  --warning-foreground: 0.15 0.018 75;
+  --border: 0.3 0.022 250;
+  --input: 0.3 0.022 250;
+  --ring: 0.7 0.14 55;
+  --chart-1: 0.7 0.14 55;
+  --chart-2: 0.62 0.12 250;
+  --chart-3: 0.65 0.16 150;
+  --chart-4: 0.72 0.15 75;
+  --chart-5: 0.55 0.2 25;
+  --sidebar: 0.13 0.018 250;
+  --sidebar-foreground: 0.93 0.01 75;
+  --sidebar-primary: 0.7 0.14 55;
+  --sidebar-primary-foreground: 0.15 0.018 55;
+  --sidebar-accent: 0.62 0.12 250;
+  --sidebar-accent-foreground: 0.93 0.01 250;
+  --sidebar-border: 0.3 0.022 250;
+  --sidebar-ring: 0.7 0.14 55;
   --font-display: "Fraunces", serif;
   --font-body: "General Sans", sans-serif;
   --font-mono: "JetBrains Mono", monospace;
@@ -318,20 +165,7 @@
     oklch(0.62 0.12 250) 0%,
     oklch(0.55 0.11 240) 100%
   );
-  --gradient-trust: linear-gradient(
-    135deg,
-    oklch(0.65 0.16 150) 0%,
-    oklch(0.62 0.12 250) 100%
-  );
-  --gradient-tier: linear-gradient(
-    135deg,
-    oklch(0.76 0.14 80) 0%,
-    oklch(0.6 0.13 280) 100%
-  );
   --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-fast: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-  --transition-slow: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
   --shadow-x: 0;
   --shadow-y: 1px;
   --shadow-blur: 3px;
@@ -351,11 +185,6 @@
   --shadow-xl: 0 16px 32px -8px oklch(0.05 0.01 250 / 0.5), 0 8px 16px -4px
     oklch(0.05 0.01 250 / 0.3);
   --shadow-2xl: 0 24px 48px -12px oklch(0.05 0.01 250 / 0.6);
-  --shadow-subtle: 0 1px 2px 0px oklch(0.05 0.01 250 / 0.12);
-  --shadow-elevated: 0 12px 24px -6px oklch(0.7 0.14 55 / 0.22), 0 6px 12px -4px
-    oklch(0.05 0.01 250 / 0.3);
-  --shadow-trust: 0 4px 12px -2px oklch(0.65 0.16 150 / 0.28);
-  --shadow-tier: 0 4px 12px -2px oklch(0.76 0.14 80 / 0.3);
 }
 
 @theme {
@@ -390,28 +219,6 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
-  --color-trust-verified: var(--trust-verified);
-  --color-trust-verified-foreground: var(--trust-verified-foreground);
-  --color-trust-checked: var(--trust-checked);
-  --color-trust-checked-foreground: var(--trust-checked-foreground);
-  --color-trust-bound: var(--trust-bound);
-  --color-trust-bound-foreground: var(--trust-bound-foreground);
-  --color-trust-pending: var(--trust-pending);
-  --color-trust-pending-foreground: var(--trust-pending-foreground);
-  --color-verify-basic: var(--verify-basic);
-  --color-verify-basic-foreground: var(--verify-basic-foreground);
-  --color-verify-confirmed: var(--verify-confirmed);
-  --color-verify-confirmed-foreground: var(--verify-confirmed-foreground);
-  --color-verify-guaranteed: var(--verify-guaranteed);
-  --color-verify-guaranteed-foreground: var(--verify-guaranteed-foreground);
-  --color-tier-bronze: var(--tier-bronze);
-  --color-tier-bronze-foreground: var(--tier-bronze-foreground);
-  --color-tier-silver: var(--tier-silver);
-  --color-tier-silver-foreground: var(--tier-silver-foreground);
-  --color-tier-gold: var(--tier-gold);
-  --color-tier-gold-foreground: var(--tier-gold-foreground);
-  --color-tier-platinum: var(--tier-platinum);
-  --color-tier-platinum-foreground: var(--tier-platinum-foreground);
   --font-display: var(--font-display);
   --font-body: var(--font-body);
   --font-mono: var(--font-mono);
@@ -431,164 +238,14 @@
   .gradient-accent {
     background-image: var(--gradient-accent);
   }
-  .gradient-trust {
-    background-image: var(--gradient-trust);
-  }
-  .gradient-tier {
-    background-image: var(--gradient-tier);
-  }
   .transition-smooth {
     transition: var(--transition-smooth);
-  }
-  .transition-fast {
-    transition: var(--transition-fast);
-  }
-  .transition-slow {
-    transition: var(--transition-slow);
   }
   .font-display {
     font-family: var(--font-display);
   }
   .font-body {
     font-family: var(--font-body);
-  }
-
-  /* Accessible focus ring — visible on cream & ink, keyboard-only */
-  .focus-ring:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 var(--focus-ring-offset-width) var(--focus-ring-offset), 0
-      0 0 calc(var(--focus-ring-offset-width) + var(--focus-ring-width))
-      var(--focus-ring);
-  }
-
-  /* Motion utilities — guarded by prefers-reduced-motion */
-  .animate-page-transition {
-    animation: page-transition 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
-  }
-  .animate-card-hover-lift {
-    transition: transform var(--transition-smooth), box-shadow
-      var(--transition-smooth);
-  }
-  .animate-card-hover-lift:hover {
-    transform: translateY(-2px);
-  }
-  .animate-badge-pop {
-    animation: badge-pop 0.4s var(--ease-spring) both;
-  }
-  .animate-fade-in-up {
-    animation: fade-in-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) both;
-  }
-  .animate-shimmer {
-    background: linear-gradient(
-      90deg,
-      var(--muted) 0%,
-      var(--card) 50%,
-      var(--muted) 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.6s ease-in-out infinite;
-  }
-  .skeleton {
-    background: var(--muted);
-    border-radius: var(--radius);
-    position: relative;
-    overflow: hidden;
-  }
-  .skeleton::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(
-      90deg,
-      transparent 0%,
-      oklch(from var(--card) l c h / 0.6) 50%,
-      transparent 100%
-    );
-    animation: shimmer 1.6s ease-in-out infinite;
-  }
-
-  /* Staggered entrance helpers for card grids */
-  .stagger-1 {
-    animation-delay: 0.05s;
-  }
-  .stagger-2 {
-    animation-delay: 0.1s;
-  }
-  .stagger-3 {
-    animation-delay: 0.15s;
-  }
-  .stagger-4 {
-    animation-delay: 0.2s;
-  }
-  .stagger-5 {
-    animation-delay: 0.25s;
-  }
-  .stagger-6 {
-    animation-delay: 0.3s;
-  }
-}
-
-@keyframes page-transition {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes badge-pop {
-  0% {
-    opacity: 0;
-    transform: scale(0.85);
-  }
-  60% {
-    transform: scale(1.04);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes shimmer {
-  0% {
-    background-position: 200% 0;
-  }
-  100% {
-    background-position: -200% 0;
-  }
-}
-
-/* Reduced-motion guard — disable non-essential motion */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
-  }
-  .animate-card-hover-lift:hover {
-    transform: none;
-  }
-  .skeleton::after,
-  .animate-shimmer {
-    animation: none;
   }
 }
 

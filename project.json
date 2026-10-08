@@ -1,25 +1,19 @@
 {
-  "overview": "A polished multi-vendor service marketplace for the Dallas-Fort Worth area with trust protocols, rewards, AI matching, provider microsites, and a documentation hub.",
+  "overview": "DFW Service Hub is a multi-vendor service marketplace for the Dallas-Fort Worth area with customer, provider, and admin portals, now supporting Google and email/password sign-in.",
   "features": [
-    "Multi-vendor service marketplace for DFW area",
-    "Provider microsites with AI generation",
-    "Trust scores and multi-tier verification protocols",
-    "Dispute and escalation flows",
-    "User rewards, loyalty tiers, and achievement badges",
-    "AI provider matching engine",
-    "Conversational AI assistant",
-    "Documentation hub",
-    "Provider SaaS business hub with analytics"
+    "Google sign-in",
+    "Email and password sign-up and sign-in",
+    "Customer portal for browsing and booking services",
+    "Provider portal for listings, bookings, and messaging",
+    "Admin portal for provider approval and review moderation",
+    "AI tools for listing content generation"
   ],
-  "category": "productivity",
+  "category": "marketplace",
   "tags": [
     "marketplace",
-    "service",
-    "dfw",
-    "ai",
-    "trust",
-    "rewards",
-    "provider-hub"
+    "service-hub",
+    "dallas-fort-worth",
+    "authentication"
   ],
-  "last_updated": "2026-07-23T15:17:13.137Z"
+  "last_updated": "2026-08-09T02:29:35.742Z"
 }

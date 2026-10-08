@@ -73,40 +73,7 @@ export const Booking = IDL.Record({
   'customerId' : UserId,
   'providerId' : IDL.Nat,
 });
-export const AssistantInput = IDL.Record({
-  'context' : IDL.Opt(IDL.Text),
-  'message' : IDL.Text,
-});
-export const AssistantRole = IDL.Variant({
-  'user' : IDL.Null,
-  'assistant' : IDL.Null,
-});
-export const AssistantMessage = IDL.Record({
-  'content' : IDL.Text,
-  'context' : IDL.Opt(IDL.Text),
-  'role' : AssistantRole,
-  'timestamp' : Timestamp,
-});
-export const AISearchResult = IDL.Record({
-  'listingId' : IDL.Nat,
-  'score' : IDL.Nat,
-  'rationale' : IDL.Text,
-  'providerId' : IDL.Nat,
-});
 export const ExternalBlob = IDL.Vec(IDL.Nat8);
-export const ReferralStatus = IDL.Variant({
-  'expired' : IDL.Null,
-  'pending' : IDL.Null,
-  'awarded' : IDL.Null,
-});
-export const Referral = IDL.Record({
-  'id' : IDL.Nat,
-  'status' : ReferralStatus,
-  'referrer' : UserId,
-  'createdAt' : Timestamp,
-  'awardedAt' : IDL.Opt(Timestamp),
-  'referee' : UserId,
-});
 export const VerificationStatus = IDL.Variant({
   'pending' : IDL.Null,
   'approved' : IDL.Null,
@@ -133,13 +100,6 @@ export const UserRole = IDL.Variant({
   'user' : IDL.Null,
   'guest' : IDL.Null,
 });
-export const RewardLedgerEntry = IDL.Record({
-  'id' : IDL.Nat,
-  'userId' : UserId,
-  'timestamp' : Timestamp,
-  'points' : IDL.Nat,
-  'reason' : IDL.Text,
-});
 export const SlotStatus = IDL.Variant({
   'blocked' : IDL.Null,
   'available' : IDL.Null,
@@ -159,29 +119,6 @@ export const BookingInput = IDL.Record({
   'listingId' : IDL.Nat,
   'jobDetails' : IDL.Text,
   'address' : IDL.Text,
-});
-export const DocStatus = IDL.Variant({
-  'published' : IDL.Null,
-  'draft' : IDL.Null,
-});
-export const DocInput = IDL.Record({
-  'status' : DocStatus,
-  'title' : IDL.Text,
-  'content' : IDL.Text,
-  'slug' : IDL.Text,
-  'category' : IDL.Text,
-});
-export const Doc = IDL.Record({
-  'id' : IDL.Nat,
-  'status' : DocStatus,
-  'title' : IDL.Text,
-  'readingTime' : IDL.Nat,
-  'content' : IDL.Text,
-  'createdAt' : Timestamp,
-  'slug' : IDL.Text,
-  'author' : UserId,
-  'updatedAt' : Timestamp,
-  'category' : IDL.Text,
 });
 export const ServiceListingInput = IDL.Record({
   'serviceArea' : IDL.Text,
@@ -224,24 +161,6 @@ export const Review = IDL.Record({
   'writtenText' : IDL.Text,
   'providerId' : IDL.Nat,
 });
-export const DisputeStatus = IDL.Variant({
-  'resolved' : IDL.Null,
-  'responded' : IDL.Null,
-  'escalated' : IDL.Null,
-  'open' : IDL.Null,
-});
-export const Dispute = IDL.Record({
-  'id' : IDL.Nat,
-  'status' : DisputeStatus,
-  'bookingId' : IDL.Nat,
-  'createdAt' : Timestamp,
-  'aiTriageSuggestion' : IDL.Opt(IDL.Text),
-  'updatedAt' : Timestamp,
-  'providerResponse' : IDL.Opt(IDL.Text),
-  'adminResolution' : IDL.Opt(IDL.Text),
-  'openedBy' : UserId,
-  'reason' : IDL.Text,
-});
 export const Value = IDL.Variant({
   'int' : IDL.Int,
   'nat' : IDL.Nat,
@@ -255,51 +174,19 @@ export const Result = IDL.Record({
   'hasMore' : IDL.Bool,
   'rows' : IDL.Vec(IDL.Vec(Cell)),
 });
-export const Tone = IDL.Variant({
-  'concise' : IDL.Null,
-  'professional' : IDL.Null,
-  'friendly' : IDL.Null,
+export const AuthId = IDL.Principal;
+export const IdentitySource = IDL.Variant({
+  'internetIdentity' : IDL.Null,
+  'google' : IDL.Null,
+  'email' : IDL.Null,
 });
-export const Microsite = IDL.Record({
-  'id' : IDL.Nat,
-  'blockOrder' : IDL.Vec(IDL.Text),
-  'generatedAt' : IDL.Opt(Timestamp),
-  'published' : IDL.Bool,
-  'createdAt' : Timestamp,
-  'slug' : IDL.Text,
-  'heroCopy' : IDL.Text,
-  'accentColor' : IDL.Opt(IDL.Text),
-  'coverImage' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-  'updatedAt' : Timestamp,
-  'servicesCopy' : IDL.Text,
-  'aboutCopy' : IDL.Text,
-  'providerId' : IDL.Nat,
-});
-export const ProviderInsights = IDL.Record({
-  'insights' : IDL.Text,
-  'recommendations' : IDL.Vec(IDL.Text),
-  'providerId' : IDL.Nat,
-});
-export const ReviewSummary = IDL.Record({
-  'sentiment' : IDL.Text,
-  'summary' : IDL.Text,
-  'themes' : IDL.Vec(IDL.Text),
-  'providerId' : IDL.Nat,
-});
-export const RewardTier = IDL.Variant({
-  'bronze' : IDL.Null,
-  'gold' : IDL.Null,
-  'platinum' : IDL.Null,
-  'silver' : IDL.Null,
-});
-export const RewardProfile = IDL.Record({
-  'streak' : IDL.Nat,
-  'referralCode' : IDL.Text,
-  'userId' : UserId,
-  'badges' : IDL.Vec(IDL.Text),
-  'tier' : RewardTier,
-  'updatedAt' : Timestamp,
-  'points' : IDL.Nat,
+export const IdentityAttributes = IDL.Record({
+  'principal' : AuthId,
+  'lastSeenAt' : IDL.Nat,
+  'displayName' : IDL.Opt(IDL.Text),
+  'source' : IdentitySource,
+  'firstSeenAt' : IDL.Nat,
+  'email' : IDL.Opt(IDL.Text),
 });
 export const MarketplaceRole = IDL.Variant({
   'admin' : IDL.Null,
@@ -314,7 +201,6 @@ export const User = IDL.Record({
   'email' : IDL.Opt(IDL.Text),
   'updatedAt' : Timestamp,
   'phone' : IDL.Opt(IDL.Text),
-  'workPhotos' : IDL.Vec(ExternalBlob),
   'avatar' : IDL.Opt(ExternalBlob),
 });
 export const Message = IDL.Record({
@@ -325,81 +211,12 @@ export const Message = IDL.Record({
   'sender' : UserId,
   'sentAt' : Timestamp,
 });
-export const TrustScore = IDL.Record({
-  'reviews' : IDL.Nat,
-  'longevity' : IDL.Nat,
-  'updatedAt' : Timestamp,
-  'responsiveness' : IDL.Nat,
-  'overall' : IDL.Nat,
-  'disputeHistory' : IDL.Nat,
-  'verification' : IDL.Nat,
-});
-export const VerificationTierStatus = IDL.Variant({
-  'expired' : IDL.Null,
-  'pending' : IDL.Null,
-  'approved' : IDL.Null,
-  'unverified' : IDL.Null,
-  'rejected' : IDL.Null,
-});
-export const VerificationTierRecord = IDL.Record({
-  'status' : VerificationTierStatus,
-  'note' : IDL.Opt(IDL.Text),
-  'verifiedAt' : IDL.Opt(Timestamp),
-});
-export const VerificationTiers = IDL.Record({
-  'background' : VerificationTierRecord,
-  'insurance' : VerificationTierRecord,
-  'business' : VerificationTierRecord,
-  'identity' : VerificationTierRecord,
-});
-export const ReportStatus = IDL.Variant({
-  'resolved' : IDL.Null,
-  'reviewing' : IDL.Null,
-  'open' : IDL.Null,
-  'dismissed' : IDL.Null,
-});
-export const ReportTargetType = IDL.Variant({
-  'review' : IDL.Null,
-  'listing' : IDL.Null,
-  'provider' : IDL.Null,
-  'user' : IDL.Null,
-});
-export const CommunityReport = IDL.Record({
-  'id' : IDL.Nat,
-  'status' : ReportStatus,
-  'resolutionNote' : IDL.Opt(IDL.Text),
-  'createdAt' : Timestamp,
-  'updatedAt' : Timestamp,
-  'targetType' : ReportTargetType,
-  'targetId' : IDL.Text,
-  'reporter' : UserId,
-  'reason' : IDL.Text,
-});
-export const MatchProvidersInput = IDL.Record({
-  'serviceArea' : IDL.Opt(IDL.Text),
-  'need' : IDL.Text,
-  'category' : IDL.Opt(IDL.Text),
-});
-export const ProviderMatch = IDL.Record({
-  'score' : IDL.Nat,
-  'rationale' : IDL.Text,
-  'providerId' : IDL.Nat,
-});
-export const DisputeInput = IDL.Record({
-  'bookingId' : IDL.Nat,
-  'reason' : IDL.Text,
-});
 export const ProviderInput = IDL.Record({
   'logo' : IDL.Opt(ExternalBlob),
   'serviceCategories' : IDL.Vec(ServiceCategory),
   'description' : IDL.Opt(IDL.Text),
   'companyName' : IDL.Text,
   'serviceAreas' : IDL.Vec(IDL.Text),
-});
-export const CommunityReportInput = IDL.Record({
-  'targetType' : ReportTargetType,
-  'targetId' : IDL.Text,
-  'reason' : IDL.Text,
 });
 export const SearchFilters = IDL.Record({
   'serviceArea' : IDL.Opt(IDL.Text),
@@ -413,20 +230,6 @@ export const SearchResult = IDL.Record({
   'listing' : ServiceListing,
   'provider' : Provider,
 });
-export const SeedListingOutcome = IDL.Record({
-  'category' : IDL.Variant({
-    'boxTruck' : IDL.Null,
-    'relocation' : IDL.Null,
-    'moving' : IDL.Null,
-    'trashHaul' : IDL.Null,
-  }),
-  'outcome' : IDL.Variant({ 'created' : IDL.Null, 'skipped' : IDL.Null }),
-});
-export const SeedResult = IDL.Record({
-  'listingOutcomes' : IDL.Vec(SeedListingOutcome),
-  'providerId' : IDL.Nat,
-  'providerCreated' : IDL.Bool,
-});
 export const MessageInput = IDL.Record({
   'content' : IDL.Text,
   'bookingId' : IDL.Nat,
@@ -436,61 +239,29 @@ export const AvailabilitySlotInput = IDL.Record({
   'date' : IDL.Text,
   'time' : IDL.Opt(IDL.Text),
 });
-export const DisputeTriage = IDL.Record({
-  'suggestedResolution' : IDL.Text,
-  'rationale' : IDL.Text,
-  'severity' : IDL.Text,
-  'disputeId' : IDL.Nat,
-});
-export const MicrositeInput = IDL.Record({
-  'blockOrder' : IDL.Vec(IDL.Text),
-  'published' : IDL.Bool,
-  'slug' : IDL.Text,
-  'heroCopy' : IDL.Text,
-  'accentColor' : IDL.Opt(IDL.Text),
-  'coverImage' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-  'servicesCopy' : IDL.Text,
-  'aboutCopy' : IDL.Text,
-});
 export const UserInput = IDL.Record({
   'displayName' : IDL.Text,
   'role' : MarketplaceRole,
   'email' : IDL.Opt(IDL.Text),
   'phone' : IDL.Opt(IDL.Text),
-  'workPhotos' : IDL.Vec(ExternalBlob),
   'avatar' : IDL.Opt(ExternalBlob),
 });
 
 export const idlService = IDL.Service({
   '__accessControlState' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__assistantSessions' : IDL.Func([], [IDL.Reserved], ['query']),
   '__bookings' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__communityReports' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__disputes' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__docs' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__emailNotificationsEnabled' : IDL.Func([], [IDL.Reserved], ['query']),
+  '__identities' : IDL.Func([], [IDL.Reserved], ['query']),
   '__listings' : IDL.Func([], [IDL.Reserved], ['query']),
   '__messages' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__microsites' : IDL.Func([], [IDL.Reserved], ['query']),
   '__nextBookingId' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__nextDisputeId' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__nextDocId' : IDL.Func([], [IDL.Reserved], ['query']),
   '__nextListingId' : IDL.Func([], [IDL.Reserved], ['query']),
   '__nextMessageId' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__nextMicrositeId' : IDL.Func([], [IDL.Reserved], ['query']),
   '__nextProviderId' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__nextReferralId' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__nextReportId' : IDL.Func([], [IDL.Reserved], ['query']),
   '__nextReviewId' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__nextRewardLedgerId' : IDL.Func([], [IDL.Reserved], ['query']),
   '__nextSlotId' : IDL.Func([], [IDL.Reserved], ['query']),
   '__openAIApiKey' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__providerVerifications' : IDL.Func([], [IDL.Reserved], ['query']),
   '__providers' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__referrals' : IDL.Func([], [IDL.Reserved], ['query']),
   '__reviews' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__rewardLedger' : IDL.Func([], [IDL.Reserved], ['query']),
-  '__rewards' : IDL.Func([], [IDL.Reserved], ['query']),
   '__slots' : IDL.Func([], [IDL.Reserved], ['query']),
   '__users' : IDL.Func([], [IDL.Reserved], ['query']),
   '_immutableObjectStorageBlobsAreLive' : IDL.Func(
@@ -523,19 +294,8 @@ export const idlService = IDL.Service({
   '_internet_identity_sign_in_finish' : IDL.Func([], [Result__1], []),
   '_internet_identity_sign_in_start' : IDL.Func([], [IDL.Vec(IDL.Nat8)], []),
   'acceptBooking' : IDL.Func([IDL.Nat], [Booking], []),
-  'aiAssistant' : IDL.Func([AssistantInput], [AssistantMessage], []),
-  'aiSearch' : IDL.Func([IDL.Text], [IDL.Vec(AISearchResult)], []),
-  'analyzeImageDescription' : IDL.Func([ExternalBlob], [IDL.Text], []),
-  'analyzeImageSafety' : IDL.Func([ExternalBlob], [IDL.Text], []),
-  'analyzeImageWork' : IDL.Func([ExternalBlob], [IDL.Text], []),
-  'applyReferral' : IDL.Func([IDL.Text], [Referral], []),
   'approveProvider' : IDL.Func([IDL.Nat], [Provider], []),
   'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-  'awardPoints' : IDL.Func(
-      [UserId, IDL.Nat, IDL.Text],
-      [RewardLedgerEntry],
-      [],
-    ),
   'blockAvailabilitySlot' : IDL.Func([IDL.Nat], [AvailabilitySlot], []),
   'cancelBooking' : IDL.Func([IDL.Nat], [Booking], []),
   'checkAvailability' : IDL.Func(
@@ -545,86 +305,36 @@ export const idlService = IDL.Service({
     ),
   'completeBooking' : IDL.Func([IDL.Nat], [Booking], []),
   'createBooking' : IDL.Func([BookingInput], [Booking], []),
-  'createDoc' : IDL.Func([DocInput], [Doc], []),
   'createListing' : IDL.Func([ServiceListingInput], [ServiceListing], []),
   'createReview' : IDL.Func([ReviewInput], [Review], []),
   'declineBooking' : IDL.Func([IDL.Nat], [Booking], []),
   'deleteListing' : IDL.Func([IDL.Nat], [], []),
-  'escalateDispute' : IDL.Func([IDL.Nat], [Dispute], []),
   'execute' : IDL.Func([IDL.Text], [Result], ['query']),
-  'generateBio' : IDL.Func([IDL.Text, IDL.Opt(Tone)], [IDL.Text], []),
-  'generateBookingMessage' : IDL.Func([IDL.Text], [IDL.Text], []),
-  'generateCompanyDescription' : IDL.Func(
-      [IDL.Text, IDL.Opt(Tone)],
-      [IDL.Text],
-      [],
-    ),
-  'generateListingDescription' : IDL.Func(
-      [IDL.Text, IDL.Opt(ServiceCategory), IDL.Opt(Tone)],
-      [IDL.Text],
-      [],
-    ),
-  'generateMicrosite' : IDL.Func([IDL.Nat], [Microsite], []),
-  'generatePromotionalContent' : IDL.Func(
-      [IDL.Text, IDL.Opt(ServiceCategory), IDL.Opt(Tone)],
-      [IDL.Text],
-      [],
-    ),
-  'generateProviderInsights' : IDL.Func([IDL.Nat], [ProviderInsights], []),
-  'generateReviewDraft' : IDL.Func(
-      [IDL.Nat, IDL.Nat, IDL.Opt(IDL.Text)],
-      [IDL.Text],
-      [],
-    ),
-  'generateReviewSummary' : IDL.Func([IDL.Nat], [ReviewSummary], []),
-  'generateTitleAndTagline' : IDL.Func(
-      [IDL.Text, IDL.Opt(ServiceCategory)],
-      [IDL.Vec(IDL.Text)],
-      [],
-    ),
+  'generateListingDescription' : IDL.Func([IDL.Text], [IDL.Text], []),
+  'generatePromotionalContent' : IDL.Func([IDL.Text], [IDL.Text], []),
+  'generateTitleAndTagline' : IDL.Func([IDL.Text], [IDL.Vec(IDL.Text)], []),
   'getBooking' : IDL.Func([IDL.Nat], [IDL.Opt(Booking)], ['query']),
   'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-  'getDoc' : IDL.Func([IDL.Nat], [IDL.Opt(Doc)], ['query']),
-  'getDocBySlug' : IDL.Func([IDL.Text], [IDL.Opt(Doc)], ['query']),
-  'getEmailSettings' : IDL.Func(
-      [],
-      [IDL.Record({ 'emailNotificationsEnabled' : IDL.Bool })],
-      ['query'],
-    ),
-  'getLeaderboard' : IDL.Func([IDL.Nat], [IDL.Vec(RewardProfile)], ['query']),
   'getListing' : IDL.Func([IDL.Nat], [IDL.Opt(ServiceListing)], ['query']),
-  'getMicrosite' : IDL.Func([IDL.Nat], [IDL.Opt(Microsite)], ['query']),
-  'getMicrositeBySlug' : IDL.Func([IDL.Text], [IDL.Opt(Microsite)], ['query']),
   'getMyBooking' : IDL.Func([IDL.Nat], [IDL.Opt(Booking)], ['query']),
+  'getMyDisplayName' : IDL.Func([], [IDL.Opt(IDL.Text)], ['query']),
+  'getMyEmail' : IDL.Func([], [IDL.Opt(IDL.Text)], ['query']),
+  'getMyIdentity' : IDL.Func([], [IDL.Opt(IdentityAttributes)], ['query']),
+  'getMyIdentitySource' : IDL.Func([], [IDL.Opt(IdentitySource)], ['query']),
   'getMyProvider' : IDL.Func([], [IDL.Opt(Provider)], ['query']),
-  'getMyReferralCode' : IDL.Func([], [IDL.Text], ['query']),
-  'getMyRewards' : IDL.Func([], [IDL.Opt(RewardProfile)], ['query']),
   'getMyUser' : IDL.Func([], [IDL.Opt(User)], ['query']),
   'getProvider' : IDL.Func([IDL.Nat], [IDL.Opt(Provider)], ['query']),
   'getReview' : IDL.Func([IDL.Nat], [IDL.Opt(Review)], ['query']),
-  'getRewardLedger' : IDL.Func(
-      [UserId],
-      [IDL.Vec(RewardLedgerEntry)],
-      ['query'],
-    ),
-  'getRewardsByUser' : IDL.Func([UserId], [IDL.Opt(RewardProfile)], ['query']),
   'getThread' : IDL.Func([IDL.Nat], [IDL.Vec(Message)], ['query']),
-  'getTrustScore' : IDL.Func([IDL.Nat], [TrustScore], ['query']),
   'getUnreadMessageCount' : IDL.Func([IDL.Nat], [IDL.Nat], ['query']),
   'getUser' : IDL.Func([UserId], [IDL.Opt(User)], ['query']),
-  'getVerification' : IDL.Func([IDL.Nat], [VerificationTiers], ['query']),
   'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
   'isOpenAIConfigured' : IDL.Func([], [IDL.Bool], ['query']),
-  'isOwnerSeeded' : IDL.Func([], [IDL.Bool], ['query']),
   'listAvailabilitySlots' : IDL.Func(
       [IDL.Nat],
       [IDL.Vec(AvailabilitySlot)],
       ['query'],
     ),
-  'listDisputes' : IDL.Func([], [IDL.Vec(Dispute)], ['query']),
-  'listDisputesByBooking' : IDL.Func([IDL.Nat], [IDL.Vec(Dispute)], ['query']),
-  'listDocs' : IDL.Func([], [IDL.Vec(Doc)], ['query']),
-  'listDocsByCategory' : IDL.Func([IDL.Text], [IDL.Vec(Doc)], ['query']),
   'listListingsByCategory' : IDL.Func(
       [ServiceCategory],
       [IDL.Vec(ServiceListing)],
@@ -643,35 +353,18 @@ export const idlService = IDL.Service({
       [IDL.Vec(Provider)],
       ['query'],
     ),
-  'listReports' : IDL.Func([], [IDL.Vec(CommunityReport)], ['query']),
   'listReviewsByBooking' : IDL.Func([IDL.Nat], [IDL.Vec(Review)], ['query']),
   'listReviewsByProvider' : IDL.Func([IDL.Nat], [IDL.Vec(Review)], ['query']),
   'listUsers' : IDL.Func([], [IDL.Vec(User)], ['query']),
   'markThreadRead' : IDL.Func([IDL.Nat], [], []),
-  'matchProviders' : IDL.Func(
-      [MatchProvidersInput],
-      [IDL.Vec(ProviderMatch)],
-      [],
-    ),
   'moderateReview' : IDL.Func(
       [IDL.Nat, IDL.Variant({ 'hide' : IDL.Null, 'restore' : IDL.Null })],
       [Review],
       [],
     ),
-  'openDispute' : IDL.Func([DisputeInput], [Dispute], []),
-  'publishDoc' : IDL.Func([IDL.Nat, DocStatus], [Doc], []),
-  'publishMicrosite' : IDL.Func([IDL.Nat, IDL.Bool], [Microsite], []),
   'registerProvider' : IDL.Func([ProviderInput], [Provider], []),
   'reinstateProvider' : IDL.Func([IDL.Nat], [Provider], []),
   'rejectProvider' : IDL.Func([IDL.Nat, IDL.Text], [Provider], []),
-  'reportTarget' : IDL.Func([CommunityReportInput], [CommunityReport], []),
-  'resolveDispute' : IDL.Func([IDL.Nat, IDL.Text], [Dispute], []),
-  'resolveReport' : IDL.Func(
-      [IDL.Nat, IDL.Text, IDL.Bool],
-      [CommunityReport],
-      [],
-    ),
-  'respondToDispute' : IDL.Func([IDL.Nat, IDL.Text], [Dispute], []),
   'respondToReview' : IDL.Func([IDL.Nat, IDL.Text], [Review], []),
   'scheduleBooking' : IDL.Func([IDL.Nat], [Booking], []),
   'schema' : IDL.Func([], [IDL.Text], ['query']),
@@ -680,42 +373,21 @@ export const idlService = IDL.Service({
       [IDL.Vec(SearchResult)],
       ['query'],
     ),
-  'seedOwnerServices' : IDL.Func([], [SeedResult], []),
   'sendMessage' : IDL.Func([MessageInput], [Message], []),
   'setAvailabilitySlot' : IDL.Func(
       [AvailabilitySlotInput],
       [AvailabilitySlot],
       [],
     ),
-  'setEmailNotificationsEnabled' : IDL.Func([IDL.Bool], [], []),
   'setOpenAIApiKey' : IDL.Func([IDL.Text], [], []),
   'startBooking' : IDL.Func([IDL.Nat], [Booking], []),
-  'suggestReply' : IDL.Func([IDL.Nat, IDL.Opt(IDL.Text)], [IDL.Text], []),
   'suspendProvider' : IDL.Func([IDL.Nat, IDL.Text], [Provider], []),
-  'triageDispute' : IDL.Func([IDL.Nat], [DisputeTriage], []),
-  'updateDoc' : IDL.Func([IDL.Nat, DocInput], [Doc], []),
   'updateListing' : IDL.Func(
       [IDL.Nat, ServiceListingInput],
       [ServiceListing],
       [],
     ),
   'updateMyProvider' : IDL.Func([ProviderInput], [Provider], []),
-  'updateVerificationTier' : IDL.Func(
-      [
-        IDL.Nat,
-        IDL.Variant({
-          'background' : IDL.Null,
-          'insurance' : IDL.Null,
-          'business' : IDL.Null,
-          'identity' : IDL.Null,
-        }),
-        VerificationTierStatus,
-        IDL.Opt(IDL.Text),
-      ],
-      [VerificationTiers],
-      [],
-    ),
-  'upsertMyMicrosite' : IDL.Func([MicrositeInput], [Microsite], []),
   'upsertMyUser' : IDL.Func([UserInput], [User], []),
 });
 
@@ -787,40 +459,7 @@ export const idlFactory = ({ IDL }) => {
     'customerId' : UserId,
     'providerId' : IDL.Nat,
   });
-  const AssistantInput = IDL.Record({
-    'context' : IDL.Opt(IDL.Text),
-    'message' : IDL.Text,
-  });
-  const AssistantRole = IDL.Variant({
-    'user' : IDL.Null,
-    'assistant' : IDL.Null,
-  });
-  const AssistantMessage = IDL.Record({
-    'content' : IDL.Text,
-    'context' : IDL.Opt(IDL.Text),
-    'role' : AssistantRole,
-    'timestamp' : Timestamp,
-  });
-  const AISearchResult = IDL.Record({
-    'listingId' : IDL.Nat,
-    'score' : IDL.Nat,
-    'rationale' : IDL.Text,
-    'providerId' : IDL.Nat,
-  });
   const ExternalBlob = IDL.Vec(IDL.Nat8);
-  const ReferralStatus = IDL.Variant({
-    'expired' : IDL.Null,
-    'pending' : IDL.Null,
-    'awarded' : IDL.Null,
-  });
-  const Referral = IDL.Record({
-    'id' : IDL.Nat,
-    'status' : ReferralStatus,
-    'referrer' : UserId,
-    'createdAt' : Timestamp,
-    'awardedAt' : IDL.Opt(Timestamp),
-    'referee' : UserId,
-  });
   const VerificationStatus = IDL.Variant({
     'pending' : IDL.Null,
     'approved' : IDL.Null,
@@ -847,13 +486,6 @@ export const idlFactory = ({ IDL }) => {
     'user' : IDL.Null,
     'guest' : IDL.Null,
   });
-  const RewardLedgerEntry = IDL.Record({
-    'id' : IDL.Nat,
-    'userId' : UserId,
-    'timestamp' : Timestamp,
-    'points' : IDL.Nat,
-    'reason' : IDL.Text,
-  });
   const SlotStatus = IDL.Variant({
     'blocked' : IDL.Null,
     'available' : IDL.Null,
@@ -873,26 +505,6 @@ export const idlFactory = ({ IDL }) => {
     'listingId' : IDL.Nat,
     'jobDetails' : IDL.Text,
     'address' : IDL.Text,
-  });
-  const DocStatus = IDL.Variant({ 'published' : IDL.Null, 'draft' : IDL.Null });
-  const DocInput = IDL.Record({
-    'status' : DocStatus,
-    'title' : IDL.Text,
-    'content' : IDL.Text,
-    'slug' : IDL.Text,
-    'category' : IDL.Text,
-  });
-  const Doc = IDL.Record({
-    'id' : IDL.Nat,
-    'status' : DocStatus,
-    'title' : IDL.Text,
-    'readingTime' : IDL.Nat,
-    'content' : IDL.Text,
-    'createdAt' : Timestamp,
-    'slug' : IDL.Text,
-    'author' : UserId,
-    'updatedAt' : Timestamp,
-    'category' : IDL.Text,
   });
   const ServiceListingInput = IDL.Record({
     'serviceArea' : IDL.Text,
@@ -935,24 +547,6 @@ export const idlFactory = ({ IDL }) => {
     'writtenText' : IDL.Text,
     'providerId' : IDL.Nat,
   });
-  const DisputeStatus = IDL.Variant({
-    'resolved' : IDL.Null,
-    'responded' : IDL.Null,
-    'escalated' : IDL.Null,
-    'open' : IDL.Null,
-  });
-  const Dispute = IDL.Record({
-    'id' : IDL.Nat,
-    'status' : DisputeStatus,
-    'bookingId' : IDL.Nat,
-    'createdAt' : Timestamp,
-    'aiTriageSuggestion' : IDL.Opt(IDL.Text),
-    'updatedAt' : Timestamp,
-    'providerResponse' : IDL.Opt(IDL.Text),
-    'adminResolution' : IDL.Opt(IDL.Text),
-    'openedBy' : UserId,
-    'reason' : IDL.Text,
-  });
   const Value = IDL.Variant({
     'int' : IDL.Int,
     'nat' : IDL.Nat,
@@ -966,51 +560,19 @@ export const idlFactory = ({ IDL }) => {
     'hasMore' : IDL.Bool,
     'rows' : IDL.Vec(IDL.Vec(Cell)),
   });
-  const Tone = IDL.Variant({
-    'concise' : IDL.Null,
-    'professional' : IDL.Null,
-    'friendly' : IDL.Null,
+  const AuthId = IDL.Principal;
+  const IdentitySource = IDL.Variant({
+    'internetIdentity' : IDL.Null,
+    'google' : IDL.Null,
+    'email' : IDL.Null,
   });
-  const Microsite = IDL.Record({
-    'id' : IDL.Nat,
-    'blockOrder' : IDL.Vec(IDL.Text),
-    'generatedAt' : IDL.Opt(Timestamp),
-    'published' : IDL.Bool,
-    'createdAt' : Timestamp,
-    'slug' : IDL.Text,
-    'heroCopy' : IDL.Text,
-    'accentColor' : IDL.Opt(IDL.Text),
-    'coverImage' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-    'updatedAt' : Timestamp,
-    'servicesCopy' : IDL.Text,
-    'aboutCopy' : IDL.Text,
-    'providerId' : IDL.Nat,
-  });
-  const ProviderInsights = IDL.Record({
-    'insights' : IDL.Text,
-    'recommendations' : IDL.Vec(IDL.Text),
-    'providerId' : IDL.Nat,
-  });
-  const ReviewSummary = IDL.Record({
-    'sentiment' : IDL.Text,
-    'summary' : IDL.Text,
-    'themes' : IDL.Vec(IDL.Text),
-    'providerId' : IDL.Nat,
-  });
-  const RewardTier = IDL.Variant({
-    'bronze' : IDL.Null,
-    'gold' : IDL.Null,
-    'platinum' : IDL.Null,
-    'silver' : IDL.Null,
-  });
-  const RewardProfile = IDL.Record({
-    'streak' : IDL.Nat,
-    'referralCode' : IDL.Text,
-    'userId' : UserId,
-    'badges' : IDL.Vec(IDL.Text),
-    'tier' : RewardTier,
-    'updatedAt' : Timestamp,
-    'points' : IDL.Nat,
+  const IdentityAttributes = IDL.Record({
+    'principal' : AuthId,
+    'lastSeenAt' : IDL.Nat,
+    'displayName' : IDL.Opt(IDL.Text),
+    'source' : IdentitySource,
+    'firstSeenAt' : IDL.Nat,
+    'email' : IDL.Opt(IDL.Text),
   });
   const MarketplaceRole = IDL.Variant({
     'admin' : IDL.Null,
@@ -1025,7 +587,6 @@ export const idlFactory = ({ IDL }) => {
     'email' : IDL.Opt(IDL.Text),
     'updatedAt' : Timestamp,
     'phone' : IDL.Opt(IDL.Text),
-    'workPhotos' : IDL.Vec(ExternalBlob),
     'avatar' : IDL.Opt(ExternalBlob),
   });
   const Message = IDL.Record({
@@ -1036,81 +597,12 @@ export const idlFactory = ({ IDL }) => {
     'sender' : UserId,
     'sentAt' : Timestamp,
   });
-  const TrustScore = IDL.Record({
-    'reviews' : IDL.Nat,
-    'longevity' : IDL.Nat,
-    'updatedAt' : Timestamp,
-    'responsiveness' : IDL.Nat,
-    'overall' : IDL.Nat,
-    'disputeHistory' : IDL.Nat,
-    'verification' : IDL.Nat,
-  });
-  const VerificationTierStatus = IDL.Variant({
-    'expired' : IDL.Null,
-    'pending' : IDL.Null,
-    'approved' : IDL.Null,
-    'unverified' : IDL.Null,
-    'rejected' : IDL.Null,
-  });
-  const VerificationTierRecord = IDL.Record({
-    'status' : VerificationTierStatus,
-    'note' : IDL.Opt(IDL.Text),
-    'verifiedAt' : IDL.Opt(Timestamp),
-  });
-  const VerificationTiers = IDL.Record({
-    'background' : VerificationTierRecord,
-    'insurance' : VerificationTierRecord,
-    'business' : VerificationTierRecord,
-    'identity' : VerificationTierRecord,
-  });
-  const ReportStatus = IDL.Variant({
-    'resolved' : IDL.Null,
-    'reviewing' : IDL.Null,
-    'open' : IDL.Null,
-    'dismissed' : IDL.Null,
-  });
-  const ReportTargetType = IDL.Variant({
-    'review' : IDL.Null,
-    'listing' : IDL.Null,
-    'provider' : IDL.Null,
-    'user' : IDL.Null,
-  });
-  const CommunityReport = IDL.Record({
-    'id' : IDL.Nat,
-    'status' : ReportStatus,
-    'resolutionNote' : IDL.Opt(IDL.Text),
-    'createdAt' : Timestamp,
-    'updatedAt' : Timestamp,
-    'targetType' : ReportTargetType,
-    'targetId' : IDL.Text,
-    'reporter' : UserId,
-    'reason' : IDL.Text,
-  });
-  const MatchProvidersInput = IDL.Record({
-    'serviceArea' : IDL.Opt(IDL.Text),
-    'need' : IDL.Text,
-    'category' : IDL.Opt(IDL.Text),
-  });
-  const ProviderMatch = IDL.Record({
-    'score' : IDL.Nat,
-    'rationale' : IDL.Text,
-    'providerId' : IDL.Nat,
-  });
-  const DisputeInput = IDL.Record({
-    'bookingId' : IDL.Nat,
-    'reason' : IDL.Text,
-  });
   const ProviderInput = IDL.Record({
     'logo' : IDL.Opt(ExternalBlob),
     'serviceCategories' : IDL.Vec(ServiceCategory),
     'description' : IDL.Opt(IDL.Text),
     'companyName' : IDL.Text,
     'serviceAreas' : IDL.Vec(IDL.Text),
-  });
-  const CommunityReportInput = IDL.Record({
-    'targetType' : ReportTargetType,
-    'targetId' : IDL.Text,
-    'reason' : IDL.Text,
   });
   const SearchFilters = IDL.Record({
     'serviceArea' : IDL.Opt(IDL.Text),
@@ -1124,20 +616,6 @@ export const idlFactory = ({ IDL }) => {
     'listing' : ServiceListing,
     'provider' : Provider,
   });
-  const SeedListingOutcome = IDL.Record({
-    'category' : IDL.Variant({
-      'boxTruck' : IDL.Null,
-      'relocation' : IDL.Null,
-      'moving' : IDL.Null,
-      'trashHaul' : IDL.Null,
-    }),
-    'outcome' : IDL.Variant({ 'created' : IDL.Null, 'skipped' : IDL.Null }),
-  });
-  const SeedResult = IDL.Record({
-    'listingOutcomes' : IDL.Vec(SeedListingOutcome),
-    'providerId' : IDL.Nat,
-    'providerCreated' : IDL.Bool,
-  });
   const MessageInput = IDL.Record({
     'content' : IDL.Text,
     'bookingId' : IDL.Nat,
@@ -1147,61 +625,29 @@ export const idlFactory = ({ IDL }) => {
     'date' : IDL.Text,
     'time' : IDL.Opt(IDL.Text),
   });
-  const DisputeTriage = IDL.Record({
-    'suggestedResolution' : IDL.Text,
-    'rationale' : IDL.Text,
-    'severity' : IDL.Text,
-    'disputeId' : IDL.Nat,
-  });
-  const MicrositeInput = IDL.Record({
-    'blockOrder' : IDL.Vec(IDL.Text),
-    'published' : IDL.Bool,
-    'slug' : IDL.Text,
-    'heroCopy' : IDL.Text,
-    'accentColor' : IDL.Opt(IDL.Text),
-    'coverImage' : IDL.Opt(IDL.Vec(IDL.Nat8)),
-    'servicesCopy' : IDL.Text,
-    'aboutCopy' : IDL.Text,
-  });
   const UserInput = IDL.Record({
     'displayName' : IDL.Text,
     'role' : MarketplaceRole,
     'email' : IDL.Opt(IDL.Text),
     'phone' : IDL.Opt(IDL.Text),
-    'workPhotos' : IDL.Vec(ExternalBlob),
     'avatar' : IDL.Opt(ExternalBlob),
   });
   
   return IDL.Service({
     '__accessControlState' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__assistantSessions' : IDL.Func([], [IDL.Reserved], ['query']),
     '__bookings' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__communityReports' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__disputes' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__docs' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__emailNotificationsEnabled' : IDL.Func([], [IDL.Reserved], ['query']),
+    '__identities' : IDL.Func([], [IDL.Reserved], ['query']),
     '__listings' : IDL.Func([], [IDL.Reserved], ['query']),
     '__messages' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__microsites' : IDL.Func([], [IDL.Reserved], ['query']),
     '__nextBookingId' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__nextDisputeId' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__nextDocId' : IDL.Func([], [IDL.Reserved], ['query']),
     '__nextListingId' : IDL.Func([], [IDL.Reserved], ['query']),
     '__nextMessageId' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__nextMicrositeId' : IDL.Func([], [IDL.Reserved], ['query']),
     '__nextProviderId' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__nextReferralId' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__nextReportId' : IDL.Func([], [IDL.Reserved], ['query']),
     '__nextReviewId' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__nextRewardLedgerId' : IDL.Func([], [IDL.Reserved], ['query']),
     '__nextSlotId' : IDL.Func([], [IDL.Reserved], ['query']),
     '__openAIApiKey' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__providerVerifications' : IDL.Func([], [IDL.Reserved], ['query']),
     '__providers' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__referrals' : IDL.Func([], [IDL.Reserved], ['query']),
     '__reviews' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__rewardLedger' : IDL.Func([], [IDL.Reserved], ['query']),
-    '__rewards' : IDL.Func([], [IDL.Reserved], ['query']),
     '__slots' : IDL.Func([], [IDL.Reserved], ['query']),
     '__users' : IDL.Func([], [IDL.Reserved], ['query']),
     '_immutableObjectStorageBlobsAreLive' : IDL.Func(
@@ -1234,19 +680,8 @@ export const idlFactory = ({ IDL }) => {
     '_internet_identity_sign_in_finish' : IDL.Func([], [Result__1], []),
     '_internet_identity_sign_in_start' : IDL.Func([], [IDL.Vec(IDL.Nat8)], []),
     'acceptBooking' : IDL.Func([IDL.Nat], [Booking], []),
-    'aiAssistant' : IDL.Func([AssistantInput], [AssistantMessage], []),
-    'aiSearch' : IDL.Func([IDL.Text], [IDL.Vec(AISearchResult)], []),
-    'analyzeImageDescription' : IDL.Func([ExternalBlob], [IDL.Text], []),
-    'analyzeImageSafety' : IDL.Func([ExternalBlob], [IDL.Text], []),
-    'analyzeImageWork' : IDL.Func([ExternalBlob], [IDL.Text], []),
-    'applyReferral' : IDL.Func([IDL.Text], [Referral], []),
     'approveProvider' : IDL.Func([IDL.Nat], [Provider], []),
     'assignCallerUserRole' : IDL.Func([IDL.Principal, UserRole], [], []),
-    'awardPoints' : IDL.Func(
-        [UserId, IDL.Nat, IDL.Text],
-        [RewardLedgerEntry],
-        [],
-      ),
     'blockAvailabilitySlot' : IDL.Func([IDL.Nat], [AvailabilitySlot], []),
     'cancelBooking' : IDL.Func([IDL.Nat], [Booking], []),
     'checkAvailability' : IDL.Func(
@@ -1256,98 +691,36 @@ export const idlFactory = ({ IDL }) => {
       ),
     'completeBooking' : IDL.Func([IDL.Nat], [Booking], []),
     'createBooking' : IDL.Func([BookingInput], [Booking], []),
-    'createDoc' : IDL.Func([DocInput], [Doc], []),
     'createListing' : IDL.Func([ServiceListingInput], [ServiceListing], []),
     'createReview' : IDL.Func([ReviewInput], [Review], []),
     'declineBooking' : IDL.Func([IDL.Nat], [Booking], []),
     'deleteListing' : IDL.Func([IDL.Nat], [], []),
-    'escalateDispute' : IDL.Func([IDL.Nat], [Dispute], []),
     'execute' : IDL.Func([IDL.Text], [Result], ['query']),
-    'generateBio' : IDL.Func([IDL.Text, IDL.Opt(Tone)], [IDL.Text], []),
-    'generateBookingMessage' : IDL.Func([IDL.Text], [IDL.Text], []),
-    'generateCompanyDescription' : IDL.Func(
-        [IDL.Text, IDL.Opt(Tone)],
-        [IDL.Text],
-        [],
-      ),
-    'generateListingDescription' : IDL.Func(
-        [IDL.Text, IDL.Opt(ServiceCategory), IDL.Opt(Tone)],
-        [IDL.Text],
-        [],
-      ),
-    'generateMicrosite' : IDL.Func([IDL.Nat], [Microsite], []),
-    'generatePromotionalContent' : IDL.Func(
-        [IDL.Text, IDL.Opt(ServiceCategory), IDL.Opt(Tone)],
-        [IDL.Text],
-        [],
-      ),
-    'generateProviderInsights' : IDL.Func([IDL.Nat], [ProviderInsights], []),
-    'generateReviewDraft' : IDL.Func(
-        [IDL.Nat, IDL.Nat, IDL.Opt(IDL.Text)],
-        [IDL.Text],
-        [],
-      ),
-    'generateReviewSummary' : IDL.Func([IDL.Nat], [ReviewSummary], []),
-    'generateTitleAndTagline' : IDL.Func(
-        [IDL.Text, IDL.Opt(ServiceCategory)],
-        [IDL.Vec(IDL.Text)],
-        [],
-      ),
+    'generateListingDescription' : IDL.Func([IDL.Text], [IDL.Text], []),
+    'generatePromotionalContent' : IDL.Func([IDL.Text], [IDL.Text], []),
+    'generateTitleAndTagline' : IDL.Func([IDL.Text], [IDL.Vec(IDL.Text)], []),
     'getBooking' : IDL.Func([IDL.Nat], [IDL.Opt(Booking)], ['query']),
     'getCallerUserRole' : IDL.Func([], [UserRole], ['query']),
-    'getDoc' : IDL.Func([IDL.Nat], [IDL.Opt(Doc)], ['query']),
-    'getDocBySlug' : IDL.Func([IDL.Text], [IDL.Opt(Doc)], ['query']),
-    'getEmailSettings' : IDL.Func(
-        [],
-        [IDL.Record({ 'emailNotificationsEnabled' : IDL.Bool })],
-        ['query'],
-      ),
-    'getLeaderboard' : IDL.Func([IDL.Nat], [IDL.Vec(RewardProfile)], ['query']),
     'getListing' : IDL.Func([IDL.Nat], [IDL.Opt(ServiceListing)], ['query']),
-    'getMicrosite' : IDL.Func([IDL.Nat], [IDL.Opt(Microsite)], ['query']),
-    'getMicrositeBySlug' : IDL.Func(
-        [IDL.Text],
-        [IDL.Opt(Microsite)],
-        ['query'],
-      ),
     'getMyBooking' : IDL.Func([IDL.Nat], [IDL.Opt(Booking)], ['query']),
+    'getMyDisplayName' : IDL.Func([], [IDL.Opt(IDL.Text)], ['query']),
+    'getMyEmail' : IDL.Func([], [IDL.Opt(IDL.Text)], ['query']),
+    'getMyIdentity' : IDL.Func([], [IDL.Opt(IdentityAttributes)], ['query']),
+    'getMyIdentitySource' : IDL.Func([], [IDL.Opt(IdentitySource)], ['query']),
     'getMyProvider' : IDL.Func([], [IDL.Opt(Provider)], ['query']),
-    'getMyReferralCode' : IDL.Func([], [IDL.Text], ['query']),
-    'getMyRewards' : IDL.Func([], [IDL.Opt(RewardProfile)], ['query']),
     'getMyUser' : IDL.Func([], [IDL.Opt(User)], ['query']),
     'getProvider' : IDL.Func([IDL.Nat], [IDL.Opt(Provider)], ['query']),
     'getReview' : IDL.Func([IDL.Nat], [IDL.Opt(Review)], ['query']),
-    'getRewardLedger' : IDL.Func(
-        [UserId],
-        [IDL.Vec(RewardLedgerEntry)],
-        ['query'],
-      ),
-    'getRewardsByUser' : IDL.Func(
-        [UserId],
-        [IDL.Opt(RewardProfile)],
-        ['query'],
-      ),
     'getThread' : IDL.Func([IDL.Nat], [IDL.Vec(Message)], ['query']),
-    'getTrustScore' : IDL.Func([IDL.Nat], [TrustScore], ['query']),
     'getUnreadMessageCount' : IDL.Func([IDL.Nat], [IDL.Nat], ['query']),
     'getUser' : IDL.Func([UserId], [IDL.Opt(User)], ['query']),
-    'getVerification' : IDL.Func([IDL.Nat], [VerificationTiers], ['query']),
     'isCallerAdmin' : IDL.Func([], [IDL.Bool], ['query']),
     'isOpenAIConfigured' : IDL.Func([], [IDL.Bool], ['query']),
-    'isOwnerSeeded' : IDL.Func([], [IDL.Bool], ['query']),
     'listAvailabilitySlots' : IDL.Func(
         [IDL.Nat],
         [IDL.Vec(AvailabilitySlot)],
         ['query'],
       ),
-    'listDisputes' : IDL.Func([], [IDL.Vec(Dispute)], ['query']),
-    'listDisputesByBooking' : IDL.Func(
-        [IDL.Nat],
-        [IDL.Vec(Dispute)],
-        ['query'],
-      ),
-    'listDocs' : IDL.Func([], [IDL.Vec(Doc)], ['query']),
-    'listDocsByCategory' : IDL.Func([IDL.Text], [IDL.Vec(Doc)], ['query']),
     'listListingsByCategory' : IDL.Func(
         [ServiceCategory],
         [IDL.Vec(ServiceListing)],
@@ -1366,35 +739,18 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(Provider)],
         ['query'],
       ),
-    'listReports' : IDL.Func([], [IDL.Vec(CommunityReport)], ['query']),
     'listReviewsByBooking' : IDL.Func([IDL.Nat], [IDL.Vec(Review)], ['query']),
     'listReviewsByProvider' : IDL.Func([IDL.Nat], [IDL.Vec(Review)], ['query']),
     'listUsers' : IDL.Func([], [IDL.Vec(User)], ['query']),
     'markThreadRead' : IDL.Func([IDL.Nat], [], []),
-    'matchProviders' : IDL.Func(
-        [MatchProvidersInput],
-        [IDL.Vec(ProviderMatch)],
-        [],
-      ),
     'moderateReview' : IDL.Func(
         [IDL.Nat, IDL.Variant({ 'hide' : IDL.Null, 'restore' : IDL.Null })],
         [Review],
         [],
       ),
-    'openDispute' : IDL.Func([DisputeInput], [Dispute], []),
-    'publishDoc' : IDL.Func([IDL.Nat, DocStatus], [Doc], []),
-    'publishMicrosite' : IDL.Func([IDL.Nat, IDL.Bool], [Microsite], []),
     'registerProvider' : IDL.Func([ProviderInput], [Provider], []),
     'reinstateProvider' : IDL.Func([IDL.Nat], [Provider], []),
     'rejectProvider' : IDL.Func([IDL.Nat, IDL.Text], [Provider], []),
-    'reportTarget' : IDL.Func([CommunityReportInput], [CommunityReport], []),
-    'resolveDispute' : IDL.Func([IDL.Nat, IDL.Text], [Dispute], []),
-    'resolveReport' : IDL.Func(
-        [IDL.Nat, IDL.Text, IDL.Bool],
-        [CommunityReport],
-        [],
-      ),
-    'respondToDispute' : IDL.Func([IDL.Nat, IDL.Text], [Dispute], []),
     'respondToReview' : IDL.Func([IDL.Nat, IDL.Text], [Review], []),
     'scheduleBooking' : IDL.Func([IDL.Nat], [Booking], []),
     'schema' : IDL.Func([], [IDL.Text], ['query']),
@@ -1403,42 +759,21 @@ export const idlFactory = ({ IDL }) => {
         [IDL.Vec(SearchResult)],
         ['query'],
       ),
-    'seedOwnerServices' : IDL.Func([], [SeedResult], []),
     'sendMessage' : IDL.Func([MessageInput], [Message], []),
     'setAvailabilitySlot' : IDL.Func(
         [AvailabilitySlotInput],
         [AvailabilitySlot],
         [],
       ),
-    'setEmailNotificationsEnabled' : IDL.Func([IDL.Bool], [], []),
     'setOpenAIApiKey' : IDL.Func([IDL.Text], [], []),
     'startBooking' : IDL.Func([IDL.Nat], [Booking], []),
-    'suggestReply' : IDL.Func([IDL.Nat, IDL.Opt(IDL.Text)], [IDL.Text], []),
     'suspendProvider' : IDL.Func([IDL.Nat, IDL.Text], [Provider], []),
-    'triageDispute' : IDL.Func([IDL.Nat], [DisputeTriage], []),
-    'updateDoc' : IDL.Func([IDL.Nat, DocInput], [Doc], []),
     'updateListing' : IDL.Func(
         [IDL.Nat, ServiceListingInput],
         [ServiceListing],
         [],
       ),
     'updateMyProvider' : IDL.Func([ProviderInput], [Provider], []),
-    'updateVerificationTier' : IDL.Func(
-        [
-          IDL.Nat,
-          IDL.Variant({
-            'background' : IDL.Null,
-            'insurance' : IDL.Null,
-            'business' : IDL.Null,
-            'identity' : IDL.Null,
-          }),
-          VerificationTierStatus,
-          IDL.Opt(IDL.Text),
-        ],
-        [VerificationTiers],
-        [],
-      ),
-    'upsertMyMicrosite' : IDL.Func([MicrositeInput], [Microsite], []),
     'upsertMyUser' : IDL.Func([UserInput], [User], []),
   });
 };

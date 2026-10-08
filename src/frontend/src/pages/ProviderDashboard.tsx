@@ -4,10 +4,9 @@
 
 import { BookingStatusBadge } from "@/components/BookingStatusBadge";
 import { EmptyState } from "@/components/EmptyState";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ReviewCard } from "@/components/ReviewCard";
-import { Skeleton, SkeletonCard, SkeletonText } from "@/components/Skeleton";
 import { StarRating } from "@/components/StarRating";
-import { TrustBadge } from "@/components/TrustBadge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,8 +18,6 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useGetMyProvider,
-  useGetTrustScore,
-  useGetVerification,
   useListProviderBookings,
   useListReviewsByProvider,
 } from "@/hooks/useQueries";
@@ -90,39 +87,14 @@ export function ProviderDashboard() {
     useListProviderBookings(providerId);
   const { data: reviews, isLoading: reviewsLoading } =
     useListReviewsByProvider(providerId);
-  const { data: trustScore } = useGetTrustScore(providerId);
-  const { data: verificationTiers } = useGetVerification(providerId);
 
   if (isInitializing || providerLoading) {
     return (
       <div
-        className="container mx-auto px-4 lg:px-6 py-12 max-w-6xl"
+        className="container mx-auto px-4 lg:px-6 py-16"
         data-ocid="page.provider_dashboard"
       >
-        <Skeleton className="h-9 w-64 mb-2" />
-        <Skeleton className="h-4 w-96 mb-8" />
-        <SkeletonCard withMedia={false} className="mb-8" />
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <SkeletonCard
-              // biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholders have no stable identity; index is the only available key.
-              key={i}
-              withMedia={false}
-            />
-          ))}
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 flex flex-col gap-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <SkeletonCard
-                // biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholders have no stable identity; index is the only available key.
-                key={i}
-                withMedia={false}
-              />
-            ))}
-          </div>
-          <SkeletonCard withMedia={false} />
-        </div>
+        <LoadingSpinner fullPage label="Loading provider dashboard" />
       </div>
     );
   }
@@ -136,7 +108,7 @@ export function ProviderDashboard() {
         <EmptyState
           icon={AlertCircle}
           title="Sign in to view your dashboard"
-          description="You need to sign in with Internet Identity to access your provider dashboard."
+          description="You need to sign in to access your provider dashboard."
           data-ocid="provider_dashboard.signin_required"
         />
       </div>
@@ -252,7 +224,7 @@ export function ProviderDashboard() {
       className="container mx-auto px-4 lg:px-6 py-12 max-w-6xl"
       data-ocid="page.provider_dashboard"
     >
-      <header className="mb-8 animate-fade-in-up">
+      <header className="mb-8">
         <h1 className="font-display text-3xl font-bold text-foreground">
           Provider dashboard
         </h1>
@@ -264,7 +236,7 @@ export function ProviderDashboard() {
 
       {/* Verification status banner */}
       <Card
-        className={`py-0 mb-8 border animate-fade-in-up stagger-1 ${STATUS_META[status].bg}`}
+        className={`py-0 mb-8 border ${STATUS_META[status].bg}`}
         data-ocid="provider_dashboard.status_banner"
       >
         <CardContent className="flex flex-col sm:flex-row sm:items-center gap-4 p-5">
@@ -312,17 +284,6 @@ export function ProviderDashboard() {
         </CardContent>
       </Card>
 
-      {/* Trust & verification badge */}
-      <div
-        className="mb-8 animate-fade-in-up stagger-2"
-        data-ocid="provider_dashboard.trust_section"
-      >
-        <TrustBadge
-          trustScore={trustScore ?? null}
-          verificationTiers={verificationTiers ?? null}
-        />
-      </div>
-
       {/* Stats summary */}
       <section
         className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8"
@@ -334,7 +295,7 @@ export function ProviderDashboard() {
           return (
             <Card
               key={stat.label}
-              className={`py-0 animate-fade-in-up stagger-${i + 1}`}
+              className="py-0"
               data-ocid={`provider_dashboard.stat.${i + 1}`}
             >
               <CardContent className="flex items-center gap-3 p-4">
@@ -377,15 +338,7 @@ export function ProviderDashboard() {
             </Link>
           </div>
           {bookingsLoading ? (
-            <div className="flex flex-col gap-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                <SkeletonCard
-                  // biome-ignore lint/suspicious/noArrayIndexKey: skeleton placeholders have no stable identity; index is the only available key.
-                  key={i}
-                  withMedia={false}
-                />
-              ))}
-            </div>
+            <LoadingSpinner label="Loading bookings" />
           ) : recentBookings.length === 0 ? (
             <EmptyState
               icon={ClipboardList}
@@ -429,12 +382,7 @@ export function ProviderDashboard() {
             ) : null}
           </div>
           {reviewsLoading ? (
-            <div className="flex flex-col gap-3">
-              {Array.from({ length: 3 }).map((_, i) => (
-                // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder cards, order never changes
-                <SkeletonCard key={i} withMedia={false} />
-              ))}
-            </div>
+            <LoadingSpinner label="Loading reviews" />
           ) : recentReviews.length === 0 ? (
             <EmptyState
               icon={Star}

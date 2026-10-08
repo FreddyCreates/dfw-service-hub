@@ -66,50 +66,6 @@ export default {
           4: "var(--chart-4)",
           5: "var(--chart-5)",
         },
-        "trust-verified": {
-          DEFAULT: "var(--trust-verified)",
-          foreground: "var(--trust-verified-foreground)",
-        },
-        "trust-checked": {
-          DEFAULT: "var(--trust-checked)",
-          foreground: "var(--trust-checked-foreground)",
-        },
-        "trust-bound": {
-          DEFAULT: "var(--trust-bound)",
-          foreground: "var(--trust-bound-foreground)",
-        },
-        "trust-pending": {
-          DEFAULT: "var(--trust-pending)",
-          foreground: "var(--trust-pending-foreground)",
-        },
-        "verify-basic": {
-          DEFAULT: "var(--verify-basic)",
-          foreground: "var(--verify-basic-foreground)",
-        },
-        "verify-confirmed": {
-          DEFAULT: "var(--verify-confirmed)",
-          foreground: "var(--verify-confirmed-foreground)",
-        },
-        "verify-guaranteed": {
-          DEFAULT: "var(--verify-guaranteed)",
-          foreground: "var(--verify-guaranteed-foreground)",
-        },
-        "tier-bronze": {
-          DEFAULT: "var(--tier-bronze)",
-          foreground: "var(--tier-bronze-foreground)",
-        },
-        "tier-silver": {
-          DEFAULT: "var(--tier-silver)",
-          foreground: "var(--tier-silver-foreground)",
-        },
-        "tier-gold": {
-          DEFAULT: "var(--tier-gold)",
-          foreground: "var(--tier-gold-foreground)",
-        },
-        "tier-platinum": {
-          DEFAULT: "var(--tier-platinum)",
-          foreground: "var(--tier-platinum-foreground)",
-        },
       },
       borderRadius: {
         xl: "calc(var(--radius) + 4px)",
@@ -131,35 +87,6 @@ export default {
         lg: "var(--shadow-lg)",
         xl: "var(--shadow-xl)",
         "2xl": "var(--shadow-2xl)",
-        subtle: "var(--shadow-subtle)",
-        elevated: "var(--shadow-elevated)",
-        trust: "var(--shadow-trust)",
-        tier: "var(--shadow-tier)",
-      },
-      keyframes: {
-        "page-transition": {
-          from: { opacity: "0", transform: "translateY(8px)" },
-          to: { opacity: "1", transform: "translateY(0)" },
-        },
-        "fade-in-up": {
-          from: { opacity: "0", transform: "translateY(12px)" },
-          to: { opacity: "1", transform: "translateY(0)" },
-        },
-        "badge-pop": {
-          "0%": { opacity: "0", transform: "scale(0.85)" },
-          "60%": { transform: "scale(1.04)" },
-          "100%": { opacity: "1", transform: "scale(1)" },
-        },
-        shimmer: {
-          "0%": { backgroundPosition: "200% 0" },
-          "100%": { backgroundPosition: "-200% 0" },
-        },
-      },
-      animation: {
-        "page-transition": "page-transition 0.4s cubic-bezier(0.4,0,0.2,1) both",
-        "fade-in-up": "fade-in-up 0.5s cubic-bezier(0.4,0,0.2,1) both",
-        "badge-pop": "badge-pop 0.4s cubic-bezier(0.34,1.56,0.64,1) both",
-        shimmer: "shimmer 1.6s ease-in-out infinite",
       },
     },
   },

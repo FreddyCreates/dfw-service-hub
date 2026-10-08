@@ -75,7 +75,6 @@ module {
       email = input.email;
       phone = input.phone;
       avatar = input.avatar;
-      workPhotos = input.workPhotos;
       createdAt = ts;
       updatedAt = ts;
     };

@@ -1,15 +1,11 @@
 // AdminProviders — provider verification & management for admins.
 // Lists all providers with verification badges, a pending-approval queue with
 // approve/reject (reason note), suspend/reinstate actions, search + status
-// filter, a detail dialog, and verification-tier management (identity,
-// business, insurance, background) via useUpdateVerificationTier.
-// Dark portal theme tokens, skeleton loading, and motion utilities.
+// filter, and a detail dialog.
 
 import { EmptyState } from "@/components/EmptyState";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { SkeletonList } from "@/components/Skeleton";
 import { StarRating } from "@/components/StarRating";
-import { TrustBadge } from "@/components/TrustBadge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,22 +38,17 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   useApproveProvider,
-  useGetVerification,
   useListProviders,
   useReinstateProvider,
   useRejectProvider,
   useSuspendProvider,
-  useUpdateVerificationTier,
 } from "@/hooks/useQueries";
 import { cn } from "@/lib/utils";
 import {
   CATEGORY_SHORT,
   type Provider,
   VERIFICATION_LABELS,
-  VERIFICATION_TIER_LABELS,
   type VerificationStatus,
-  type VerificationTierKey,
-  type VerificationTierStatus,
 } from "@/types";
 import { Link } from "@tanstack/react-router";
 import {
@@ -72,7 +63,7 @@ import {
   UserCheck,
   XCircle,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 
 type StatusFilter = VerificationStatus | "all";
 
@@ -82,21 +73,6 @@ const statusStyles: Record<VerificationStatus, string> = {
   rejected: "border-destructive/30 bg-destructive/10 text-destructive",
   suspended: "border-destructive/30 bg-destructive/10 text-destructive",
 };
-
-const TIER_KEYS: VerificationTierKey[] = [
-  "identity",
-  "business",
-  "insurance",
-  "background",
-];
-
-const TIER_STATUS_OPTIONS: VerificationTierStatus[] = [
-  "unverified",
-  "pending",
-  "approved",
-  "rejected",
-  "expired",
-];
 
 function initials(name: string): string {
   return name
@@ -158,7 +134,7 @@ function ProviderRow({
       type="button"
       onClick={() => onOpen(provider)}
       data-ocid={`admin_providers.row.${index + 1}`}
-      className="w-full text-left p-4 rounded-xl border border-border bg-card shadow-subtle hover:shadow-md hover:border-primary/30 animate-card-hover-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="w-full text-left p-4 rounded-xl border border-border bg-card hover:shadow-sm hover:border-primary/30 transition-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="flex items-start gap-3">
         <Avatar className="w-11 h-11 rounded-xl border border-border shrink-0">
@@ -203,149 +179,6 @@ function ProviderRow({
         </div>
       </div>
     </button>
-  );
-}
-
-// Verification-tier editor — renders one row per tier (identity, business,
-// insurance, background) with a status select and an optional note. Calls
-// useUpdateVerificationTier on change. Lives inside the provider detail
-// dialog so the hook is called at the top level of a component.
-function VerificationTierEditor({ provider }: { provider: Provider }) {
-  const { data: tiers, isLoading } = useGetVerification(provider.id);
-  const updateMutation = useUpdateVerificationTier();
-  const [notes, setNotes] = useState<Record<VerificationTierKey, string>>({
-    identity: "",
-    business: "",
-    insurance: "",
-    background: "",
-  });
-
-  // Reset notes when the provider changes.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: notes must reset whenever the selected provider changes; tiers alone does not capture the provider switch.
-  useEffect(() => {
-    setNotes({
-      identity: tiers?.identity?.note ?? "",
-      business: tiers?.business?.note ?? "",
-      insurance: tiers?.insurance?.note ?? "",
-      background: tiers?.background?.note ?? "",
-    });
-  }, [tiers, provider.id]);
-
-  function handleUpdate(
-    tier: VerificationTierKey,
-    status: VerificationTierStatus,
-  ) {
-    updateMutation.mutate({
-      providerId: provider.id,
-      tier,
-      status,
-      note: notes[tier] || null,
-    });
-  }
-
-  if (isLoading) {
-    return (
-      <div className="py-4">
-        <LoadingSpinner size="sm" label="Loading verification tiers" />
-      </div>
-    );
-  }
-
-  if (!tiers) {
-    return (
-      <p className="text-sm text-muted-foreground font-body py-2">
-        Verification tiers unavailable.
-      </p>
-    );
-  }
-
-  return (
-    <div
-      className="flex flex-col gap-3"
-      data-ocid="admin_providers.tier_editor"
-    >
-      <div>
-        <p className="text-xs text-muted-foreground font-body mb-1.5">
-          Verification tiers
-        </p>
-        <p className="text-xs text-muted-foreground font-body">
-          Set the status for each verification dimension. Changes update the
-          provider's trust score immediately.
-        </p>
-      </div>
-
-      {TIER_KEYS.map((tier) => {
-        const record = tiers[tier];
-        return (
-          <div
-            key={tier}
-            className="rounded-lg border border-border bg-secondary/30 p-3"
-            data-ocid={`admin_providers.tier.${tier}`}
-          >
-            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-              <div className="flex-1 min-w-0">
-                <p className="font-body text-sm font-medium text-foreground">
-                  {VERIFICATION_TIER_LABELS[tier]}
-                </p>
-                {record.verifiedAt ? (
-                  <p className="text-xs text-muted-foreground font-body">
-                    Verified {formatDate(record.verifiedAt)}
-                  </p>
-                ) : null}
-              </div>
-              <Select
-                value={record.status}
-                onValueChange={(v) =>
-                  handleUpdate(tier, v as VerificationTierStatus)
-                }
-              >
-                <SelectTrigger
-                  className="w-full sm:w-40"
-                  data-ocid={`admin_providers.tier.${tier}.select`}
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {TIER_STATUS_OPTIONS.map((s) => (
-                    <SelectItem key={s} value={s}>
-                      {s.charAt(0).toUpperCase() + s.slice(1)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Input
-              value={notes[tier]}
-              onChange={(e) =>
-                setNotes((prev) => ({ ...prev, [tier]: e.target.value }))
-              }
-              placeholder="Optional note (e.g. document reference, expiry)"
-              className="mt-2 text-sm"
-              data-ocid={`admin_providers.tier.${tier}.note`}
-            />
-          </div>
-        );
-      })}
-
-      {updateMutation.isError ? (
-        <p
-          className="text-sm text-destructive font-body"
-          role="alert"
-          data-ocid="admin_providers.tier.error"
-        >
-          Could not update tier.{" "}
-          {updateMutation.error instanceof Error
-            ? updateMutation.error.message
-            : "Try again."}
-        </p>
-      ) : null}
-      {updateMutation.isSuccess ? (
-        <p className="text-sm text-success font-body flex items-center gap-1">
-          <CheckCircle2 className="w-3.5 h-3.5" aria-hidden />
-          Tier updated.
-        </p>
-      ) : null}
-    </div>
   );
 }
 
@@ -433,7 +266,7 @@ export function AdminProviders() {
   return (
     <div className="bg-background" data-ocid="page.admin_providers">
       <section className="container mx-auto px-4 lg:px-6 py-10 lg:py-14">
-        <div className="flex flex-col gap-2 mb-8 animate-fade-in-up">
+        <div className="flex flex-col gap-2 mb-8">
           <div className="flex items-center gap-2 text-primary">
             <ShieldCheck className="w-5 h-5" aria-hidden />
             <span className="text-sm font-body font-medium">Admin</span>
@@ -442,9 +275,8 @@ export function AdminProviders() {
             Provider verification
           </h1>
           <p className="text-muted-foreground font-body max-w-2xl">
-            Review pending providers, approve or reject applications, manage
-            suspensions, and set verification tiers (identity, business,
-            insurance, background) across the DFW marketplace.
+            Review pending providers, approve or reject applications, and manage
+            suspensions across the DFW marketplace.
           </p>
         </div>
 
@@ -462,10 +294,7 @@ export function AdminProviders() {
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {pending.map((p, i) => (
-                <Card
-                  key={p.id}
-                  className="py-0 shadow-subtle animate-fade-in-up"
-                >
+                <Card key={p.id} className="py-0">
                   <div className="p-5 flex flex-col gap-4">
                     <div className="flex items-start gap-3">
                       <Avatar className="w-11 h-11 rounded-xl border border-border shrink-0">
@@ -575,11 +404,7 @@ export function AdminProviders() {
           </div>
 
           {isLoading ? (
-            <SkeletonList
-              count={4}
-              withMedia={false}
-              className="grid-cols-1 lg:grid-cols-2"
-            />
+            <LoadingSpinner label="Loading providers" />
           ) : filtered.length === 0 ? (
             <EmptyState
               icon={Building2}
@@ -593,9 +418,12 @@ export function AdminProviders() {
           ) : (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {filtered.map((p, i) => (
-                <div key={p.id} className="animate-fade-in-up">
-                  <ProviderRow provider={p} index={i} onOpen={setSelected} />
-                </div>
+                <ProviderRow
+                  key={p.id}
+                  provider={p}
+                  index={i}
+                  onOpen={setSelected}
+                />
               ))}
             </div>
           )}
@@ -614,7 +442,7 @@ export function AdminProviders() {
           }
         }}
       >
-        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-lg">
           {selected ? (
             <>
               <DialogHeader>
@@ -681,11 +509,6 @@ export function AdminProviders() {
                     </p>
                   </div>
                 ) : null}
-
-                {/* Verification tier editor */}
-                <div className="border-t border-border pt-4">
-                  <VerificationTierEditor provider={selected} />
-                </div>
 
                 {/* Reject note input — shown for pending/rejected */}
                 {(selected.verificationStatus === "pending" ||

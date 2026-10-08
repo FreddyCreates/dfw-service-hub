@@ -3,7 +3,7 @@
 // submits via useRegisterProvider. Shows verification status after submit.
 
 import { EmptyState } from "@/components/EmptyState";
-import { SkeletonCard } from "@/components/Skeleton";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -18,7 +18,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  useGenerateCompanyDescription,
   useGetMyProvider,
   useRegisterProvider,
   useUpdateMyProvider,
@@ -32,14 +31,7 @@ import {
 } from "@/types";
 import { ExternalBlob } from "@caffeineai/object-storage";
 import { Link } from "@tanstack/react-router";
-import {
-  AlertCircle,
-  BadgeCheck,
-  Clock,
-  Loader2,
-  Wand2,
-  XCircle,
-} from "lucide-react";
+import { AlertCircle, BadgeCheck, Clock, Loader2, XCircle } from "lucide-react";
 import { type ChangeEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -107,10 +99,10 @@ export function ProviderRegister() {
   if (isInitializing || providerLoading) {
     return (
       <div
-        className="container mx-auto px-4 lg:px-6 py-16 max-w-3xl"
+        className="container mx-auto px-4 lg:px-6 py-16"
         data-ocid="page.provider_register"
       >
-        <SkeletonCard withMedia={false} />
+        <LoadingSpinner fullPage label="Loading provider profile" />
       </div>
     );
   }
@@ -124,7 +116,7 @@ export function ProviderRegister() {
         <EmptyState
           icon={AlertCircle}
           title="Sign in to become a provider"
-          description="You need to sign in with Internet Identity before registering as a service provider on the DFW marketplace."
+          description="You need to sign in before registering as a service provider on the DFW marketplace."
           data-ocid="provider_register.signin_required"
         />
       </div>
@@ -334,45 +326,6 @@ function ProviderForm({
   onSubmit,
   submitLabel,
 }: ProviderFormProps) {
-  const generateDescription = useGenerateCompanyDescription();
-
-  const handleGenerateDescription = async () => {
-    // Build a concise context string from the form's current selections so
-    // the backend can draft a relevant company description.
-    const categoryNames = categories
-      .map((c) => CATEGORY_LABELS[c])
-      .filter(Boolean)
-      .join(", ");
-    const areaNames = areas.join(", ");
-    const parts: string[] = [];
-    if (companyName.trim()) parts.push(`Company name: ${companyName.trim()}`);
-    if (categoryNames) parts.push(`Services: ${categoryNames}`);
-    if (areaNames) parts.push(`Service areas: ${areaNames}`);
-    if (parts.length === 0) {
-      toast.error("Add a company name, services, or areas before generating.");
-      return;
-    }
-    try {
-      const generated = await generateDescription.mutateAsync({
-        companyInfo: parts.join("\n"),
-      });
-      if (generated) {
-        onDescription(generated);
-        toast.success(
-          "Company description drafted — review and edit as needed.",
-        );
-      } else {
-        toast.error("AI returned an empty description. Try again.");
-      }
-    } catch (err) {
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "Failed to generate company description",
-      );
-    }
-  };
-
   const toggleCategory = (cat: ServiceCategory) => {
     onCategories(
       categories.includes(cat)
@@ -412,7 +365,7 @@ function ProviderForm({
   };
 
   return (
-    <Card className="py-0 animate-fade-in-up">
+    <Card className="py-0">
       <CardContent className="flex flex-col gap-6 p-6">
         {/* Company name */}
         <div className="flex flex-col gap-2">
@@ -434,30 +387,12 @@ function ProviderForm({
 
         {/* Description */}
         <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <Label
-              htmlFor="description"
-              data-ocid="provider_register.description_label"
-            >
-              Description
-            </Label>
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={handleGenerateDescription}
-              disabled={generateDescription.isPending}
-              data-ocid="provider_register.ai_generate_description"
-              className="text-accent-foreground border-accent/40 hover:bg-accent/10"
-            >
-              {generateDescription.isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-              ) : (
-                <Wand2 className="w-4 h-4" aria-hidden />
-              )}
-              Generate with AI
-            </Button>
-          </div>
+          <Label
+            htmlFor="description"
+            data-ocid="provider_register.description_label"
+          >
+            Description
+          </Label>
           <Textarea
             id="description"
             value={description}
@@ -466,15 +401,6 @@ function ProviderForm({
             rows={4}
             data-ocid="provider_register.description_input"
           />
-          {generateDescription.isPending ? (
-            <p
-              className="text-xs font-body text-muted-foreground"
-              data-ocid="provider_register.ai_generating_state"
-            >
-              Drafting a description from your company name, services, and
-              areas…
-            </p>
-          ) : null}
         </div>
 
         {/* Logo */}

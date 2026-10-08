@@ -3,7 +3,7 @@
 // list existing slots from useListAvailabilitySlots with remove option.
 
 import { EmptyState } from "@/components/EmptyState";
-import { SkeletonList } from "@/components/Skeleton";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -78,7 +78,7 @@ function SlotRow({ slot, index }: SlotRowProps) {
 
   return (
     <div
-      className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3 animate-fade-in-up"
+      className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3"
       data-ocid={`provider_availability.slot.${index + 1}`}
     >
       <div className="flex items-center gap-3 min-w-0">
@@ -182,7 +182,7 @@ export function ProviderAvailability() {
         className="container mx-auto px-4 lg:px-6 py-16"
         data-ocid="page.provider_availability"
       >
-        <SkeletonList count={3} className="grid-cols-1 sm:grid-cols-2" />
+        <LoadingSpinner fullPage label="Loading availability" />
       </div>
     );
   }
@@ -196,7 +196,7 @@ export function ProviderAvailability() {
         <EmptyState
           icon={AlertCircle}
           title="Sign in to manage availability"
-          description="You need to sign in with Internet Identity to set available time slots."
+          description="You need to sign in to set available time slots."
           data-ocid="provider_availability.signin_required"
         />
       </div>
@@ -355,7 +355,7 @@ export function ProviderAvailability() {
               </div>
             </div>
             {slotsLoading ? (
-              <SkeletonList count={4} className="grid-cols-1 sm:grid-cols-2" />
+              <LoadingSpinner label="Loading slots" />
             ) : sortedSlots.length === 0 ? (
               <EmptyState
                 icon={CalendarDays}

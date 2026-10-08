@@ -36,17 +36,6 @@ module {
     #moving;
   };
 
-  // ---- Writing tone ----
-  // Selectable tone for AI copy generation endpoints. Each variant maps to a
-  // prompt instruction in lib/openai.mo (toneInstruction). Endpoints that
-  // accept a tone take it as `?Tone` so existing callers can omit it; the
-  // default (null) falls back to a professional tone.
-  public type Tone = {
-    #professional;
-    #friendly;
-    #concise;
-  };
-
   // ---- Verification status (provider governance) ----
   public type VerificationStatus = {
     #pending;
@@ -86,10 +75,6 @@ module {
     email : ?Text;
     phone : ?Text;
     avatar : ?Storage.ExternalBlob;
-    // Work-portfolio photos uploaded by the user for actual work reasons
-    // (job-site photos, completed-work evidence, etc.). Each photo can be
-    // analyzed by the AI vision endpoints (description, work analysis, safety).
-    workPhotos : [Storage.ExternalBlob];
     createdAt : Timestamp;
     updatedAt : Timestamp;
   };
@@ -199,7 +184,6 @@ module {
     email : ?Text;
     phone : ?Text;
     avatar : ?Storage.ExternalBlob;
-    workPhotos : [Storage.ExternalBlob];
   };
 
   public type ProviderInput = {

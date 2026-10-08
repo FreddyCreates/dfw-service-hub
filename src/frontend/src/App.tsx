@@ -5,17 +5,11 @@
 import { Layout } from "@/components/Layout";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { AdminBookings } from "@/pages/AdminBookings";
-import { AdminDisputes } from "@/pages/AdminDisputes";
-import { AdminDocs } from "@/pages/AdminDocs";
 import { AdminPortal } from "@/pages/AdminPortal";
 import { AdminProviders } from "@/pages/AdminProviders";
-import { AdminReports } from "@/pages/AdminReports";
 import { AdminReviews } from "@/pages/AdminReviews";
 import { CustomerBookings } from "@/pages/CustomerBookings";
 import { CustomerMessages } from "@/pages/CustomerMessages";
-import { CustomerRewards } from "@/pages/CustomerRewards";
-import { DocDetail } from "@/pages/DocDetail";
-import { DocsHub } from "@/pages/DocsHub";
 import { Home } from "@/pages/Home";
 import { HowItWorks } from "@/pages/HowItWorks";
 import { ListingDetail } from "@/pages/ListingDetail";
@@ -24,14 +18,10 @@ import { ProfilePage } from "@/pages/Profile";
 import { ProviderAITools } from "@/pages/ProviderAITools";
 import { ProviderAvailability } from "@/pages/ProviderAvailability";
 import { ProviderBookings } from "@/pages/ProviderBookings";
-import { ProviderBusiness } from "@/pages/ProviderBusiness";
-import { ProviderClients } from "@/pages/ProviderClients";
 import { ProviderDashboard } from "@/pages/ProviderDashboard";
 import { ProviderDetail } from "@/pages/ProviderDetail";
 import { ProviderListings } from "@/pages/ProviderListings";
 import { ProviderMessages } from "@/pages/ProviderMessages";
-import { ProviderMicrosite } from "@/pages/ProviderMicrosite";
-import { ProviderMicrositePublic } from "@/pages/ProviderMicrositePublic";
 import { ProviderRegister } from "@/pages/ProviderRegister";
 import { SearchPage } from "@/pages/Search";
 import {
@@ -51,10 +41,6 @@ interface SearchSearchParams {
   maxPrice?: string;
   sort?: string;
 }
-
-// ─── V3 placeholder pages ──────────────────────────────────────────────────
-// Minimal heading-only components so the V3 routes are registered and
-// reachable. Page tasks will replace these with full implementations.
 
 const rootRoute = createRootRoute({
   component: () => (
@@ -110,12 +96,6 @@ const customerMessagesRoute = createRoute({
   component: CustomerMessages,
 });
 
-const customerRewardsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/customer/rewards",
-  component: CustomerRewards,
-});
-
 const providerDashboardRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/provider/dashboard",
@@ -158,24 +138,6 @@ const providerRegisterRoute = createRoute({
   component: ProviderRegister,
 });
 
-const providerMicrositeRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/provider/microsite",
-  component: ProviderMicrosite,
-});
-
-const providerBusinessRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/provider/business",
-  component: ProviderBusiness,
-});
-
-const providerClientsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/provider/clients",
-  component: ProviderClients,
-});
-
 const adminRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/admin",
@@ -198,42 +160,6 @@ const adminReviewsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/admin/reviews",
   component: AdminReviews,
-});
-
-const adminDisputesRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/admin/disputes",
-  component: AdminDisputes,
-});
-
-const adminReportsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/admin/reports",
-  component: AdminReports,
-});
-
-const adminDocsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/admin/docs",
-  component: AdminDocs,
-});
-
-const docsIndexRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/docs",
-  component: DocsHub,
-});
-
-const docDetailRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/docs/$slug",
-  component: DocDetail,
-});
-
-const publicMicrositeRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: "/p/$slug",
-  component: ProviderMicrositePublic,
 });
 
 const profileRoute = createRoute({
@@ -261,7 +187,6 @@ const routeTree = rootRoute.addChildren([
   listingDetailRoute,
   customerBookingsRoute,
   customerMessagesRoute,
-  customerRewardsRoute,
   providerDashboardRoute,
   providerListingsRoute,
   providerBookingsRoute,
@@ -269,19 +194,10 @@ const routeTree = rootRoute.addChildren([
   providerMessagesRoute,
   providerAIToolsRoute,
   providerRegisterRoute,
-  providerMicrositeRoute,
-  providerBusinessRoute,
-  providerClientsRoute,
   adminRoute,
   adminProvidersRoute,
   adminBookingsRoute,
   adminReviewsRoute,
-  adminDisputesRoute,
-  adminReportsRoute,
-  adminDocsRoute,
-  docsIndexRoute,
-  docDetailRoute,
-  publicMicrositeRoute,
   profileRoute,
   howItWorksRoute,
   notFoundRoute,

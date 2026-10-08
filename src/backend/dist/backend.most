@@ -1,59 +1,17 @@
 // Version: 4.0.0
-type AccessControlState__836714403 =
+type AccessControlState__201339279 =
   {
     var adminAssigned : Bool;
-    userRoles : Map__246123559<Principal, UserRole__686137147>
+    userRoles : Map__386906547<Principal, UserRole__91647283>
   };
-type AssistantMessage__40534530 =
-  {
-    content : Text;
-    context : ?Text;
-    role : AssistantRole__214652217;
-    timestamp : Time__837879871
-  };
-type AssistantMessage__879167442 =
-  {
-    content : Text;
-    context : ?Text;
-    role : AssistantRole__542863247;
-    timestamp : Timestamp__227645062
-  };
-type AssistantRole__214652217 = {#assistant; #user};
-type AssistantRole__542863247 = {#assistant; #user};
-type AvailabilitySlot__232763764 =
-  {
-    createdAt : Time__837879871;
-    date : Text;
-    id : Nat;
-    providerId : Nat;
-    status : SlotStatus__17471227;
-    time : ?Text
-  };
-type AvailabilitySlot__34843434 =
-  {
-    createdAt : Time__837879871;
-    date : Text;
-    id : Nat;
-    providerId : Nat;
-    status : SlotStatus__141139919;
-    time : ?Text
-  };
+type AuthId__293791324 = Principal;
 type AvailabilitySlot__364381241 =
   {
-    createdAt : Time__837879871;
+    createdAt : Time__30997584;
     date : Text;
     id : Nat;
     providerId : Nat;
     status : SlotStatus__268547244;
-    time : ?Text
-  };
-type AvailabilitySlot__427386040 =
-  {
-    createdAt : Time__837879871;
-    date : Text;
-    id : Nat;
-    providerId : Nat;
-    status : SlotStatus__432572722;
     time : ?Text
   };
 type AvailabilitySlot__610617927 =
@@ -65,25 +23,14 @@ type AvailabilitySlot__610617927 =
     status : SlotStatus__3062101;
     time : ?Text
   };
-type BookingStatus__1011132871 =
+type AvailabilitySlot__799403882 =
   {
-    #accepted;
-    #cancelled;
-    #completed;
-    #inProgress;
-    #requested;
-    #reviewed;
-    #scheduled
-  };
-type BookingStatus__199093853 =
-  {
-    #accepted;
-    #cancelled;
-    #completed;
-    #inProgress;
-    #requested;
-    #reviewed;
-    #scheduled
+    createdAt : Time__30997584;
+    date : Text;
+    id : Nat;
+    providerId : Nat;
+    status : SlotStatus__90836664;
+    time : ?Text
   };
 type BookingStatus__247419407 =
   {
@@ -105,7 +52,7 @@ type BookingStatus__678987399 =
     #reviewed;
     #scheduled
   };
-type BookingStatus__758200929 =
+type BookingStatus__887098412 =
   {
     #accepted;
     #cancelled;
@@ -115,11 +62,11 @@ type BookingStatus__758200929 =
     #reviewed;
     #scheduled
   };
-type Booking__349780187 =
+type Booking__129571824 =
   {
     address : Text;
-    category : ServiceCategory__111985984;
-    createdAt : Time__837879871;
+    category : ServiceCategory__384656467;
+    createdAt : Time__30997584;
     customerId : Principal;
     customerNote : ?Text;
     id : Nat;
@@ -128,30 +75,14 @@ type Booking__349780187 =
     providerId : Nat;
     scheduledDate : Text;
     scheduledTime : ?Text;
-    status : BookingStatus__758200929;
-    updatedAt : Time__837879871
-  };
-type Booking__458484305 =
-  {
-    address : Text;
-    category : ServiceCategory__534672948;
-    createdAt : Time__837879871;
-    customerId : Principal;
-    customerNote : ?Text;
-    id : Nat;
-    jobDetails : Text;
-    listingId : Nat;
-    providerId : Nat;
-    scheduledDate : Text;
-    scheduledTime : ?Text;
-    status : BookingStatus__199093853;
-    updatedAt : Time__837879871
+    status : BookingStatus__887098412;
+    updatedAt : Time__30997584
   };
 type Booking__786895355 =
   {
     address : Text;
     category : ServiceCategory__714520561;
-    createdAt : Time__837879871;
+    createdAt : Time__30997584;
     customerId : Principal;
     customerNote : ?Text;
     id : Nat;
@@ -161,7 +92,7 @@ type Booking__786895355 =
     scheduledDate : Text;
     scheduledTime : ?Text;
     status : BookingStatus__247419407;
-    updatedAt : Time__837879871
+    updatedAt : Time__30997584
   };
 type Booking__796173008 =
   {
@@ -179,109 +110,33 @@ type Booking__796173008 =
     status : BookingStatus__678987399;
     updatedAt : Timestamp__427537507
   };
-type Booking__938269293 =
+type Data__265875254<K, V> = {var count : Nat__58649523; kvs : [var ?(K, V)]};
+type ExternalBlob__220559234 = Blob;
+type IdentityAttributes__44633550 =
   {
-    address : Text;
-    category : ServiceCategory__17436259;
-    createdAt : Time__837879871;
-    customerId : Principal;
-    customerNote : ?Text;
-    id : Nat;
-    jobDetails : Text;
-    listingId : Nat;
-    providerId : Nat;
-    scheduledDate : Text;
-    scheduledTime : ?Text;
-    status : BookingStatus__1011132871;
-    updatedAt : Time__837879871
+    displayName : ?Text;
+    email : ?Text;
+    firstSeenAt : Nat;
+    lastSeenAt : Nat;
+    principal : Principal;
+    source : IdentitySource__32485036
   };
-type CommunityReport__253385462 =
+type IdentityAttributes__562917176 =
   {
-    createdAt : Timestamp__227645062;
-    id : Nat;
-    reason : Text;
-    reporter : UserId__491264504;
-    resolutionNote : ?Text;
-    status : ReportStatus__597953829;
-    targetId : Text;
-    targetType : ReportTargetType__252789264;
-    updatedAt : Timestamp__227645062
+    displayName : ?Text;
+    email : ?Text;
+    firstSeenAt : Nat;
+    lastSeenAt : Nat;
+    principal : AuthId__293791324;
+    source : IdentitySource__188062706
   };
-type CommunityReport__954963139 =
-  {
-    createdAt : Time__837879871;
-    id : Nat;
-    reason : Text;
-    reporter : Principal;
-    resolutionNote : ?Text;
-    status : ReportStatus__81147912;
-    targetId : Text;
-    targetType : ReportTargetType__807853023;
-    updatedAt : Time__837879871
-  };
-type Data__552063367<K, V> = {var count : Nat__93962160; kvs : [var ?(K, V)]};
-type DisputeStatus__523477863 = {#escalated; #open; #resolved; #responded};
-type DisputeStatus__927501365 = {#escalated; #open; #resolved; #responded};
-type Dispute__1020202113 =
-  {
-    adminResolution : ?Text;
-    aiTriageSuggestion : ?Text;
-    bookingId : Nat;
-    createdAt : Time__837879871;
-    id : Nat;
-    openedBy : Principal;
-    providerResponse : ?Text;
-    reason : Text;
-    status : DisputeStatus__523477863;
-    updatedAt : Time__837879871
-  };
-type Dispute__66794884 =
-  {
-    adminResolution : ?Text;
-    aiTriageSuggestion : ?Text;
-    bookingId : Nat;
-    createdAt : Timestamp__227645062;
-    id : Nat;
-    openedBy : UserId__491264504;
-    providerResponse : ?Text;
-    reason : Text;
-    status : DisputeStatus__927501365;
-    updatedAt : Timestamp__227645062
-  };
-type DocStatus__1061111895 = {#draft; #published};
-type DocStatus__377960326 = {#draft; #published};
-type Doc__423026771 =
-  {
-    author : Principal;
-    category : Text;
-    content : Text;
-    createdAt : Time__837879871;
-    id : Nat;
-    readingTime : Nat;
-    slug : Text;
-    status : DocStatus__1061111895;
-    title : Text;
-    updatedAt : Time__837879871
-  };
-type Doc__830470140 =
-  {
-    author : UserId__491264504;
-    category : Text;
-    content : Text;
-    createdAt : Timestamp__227645062;
-    id : Nat;
-    readingTime : Nat;
-    slug : Text;
-    status : DocStatus__377960326;
-    title : Text;
-    updatedAt : Timestamp__227645062
-  };
-type ExternalBlob__675229786 = Blob;
+type IdentitySource__188062706 = {#email; #google; #internetIdentity};
+type IdentitySource__32485036 = {#email; #google; #internetIdentity};
 type Int__616954475 = Int;
-type Int__849411254 = Int__616954475;
-type Internal__455405067<K, V> =
-  {children : [var ?Node__279997185<K, V>]; data : Data__552063367<K, V>};
-type Leaf__114713147<K, V> = {data : Data__552063367<K, V>};
+type Int__895066125 = Int__616954475;
+type Internal__161573640<K, V> =
+  {children : [var ?Node__430031793<K, V>]; data : Data__265875254<K, V>};
+type Leaf__1045638083<K, V> = {data : Data__265875254<K, V>};
 type LocationType__46982725 = {#Cafe; #CoworkingSpace; #Library};
 type LocationType__966946047 = {#Cafe; #CoworkingSpace; #Library};
 type Location__128901279 =
@@ -304,15 +159,13 @@ type Location__876069989 =
     osmNodeId : Text;
     ratings : [Rating__14645485]
   };
-type Map__190625089<K, V> = Map__719753394<K, V>;
-type Map__246123559<K, V> = Map__190625089<K, V>;
-type Map__719753394<K, V> =
-  {var root : Node__279997185<K, V>; var size : Nat__93962160};
-type MarketplaceRole__1007207108 = {#admin; #customer; #provider};
+type Map__13625999<K, V> =
+  {var root : Node__430031793<K, V>; var size : Nat__58649523};
+type Map__386906547<K, V> = Map__670138087<K, V>;
+type Map__670138087<K, V> = Map__13625999<K, V>;
+type MarketplaceRole__1011599025 = {#admin; #customer; #provider};
 type MarketplaceRole__162329991 = {#admin; #customer; #provider};
 type MarketplaceRole__376112206 = {#admin; #customer; #provider};
-type MarketplaceRole__536087465 = {#admin; #customer; #provider};
-type MarketplaceRole__982213334 = {#admin; #customer; #provider};
 type Message__140784742 =
   {
     bookingId : Nat;
@@ -329,112 +182,25 @@ type Message__142762545 =
     id : Nat;
     read : Bool;
     sender : Principal;
-    sentAt : Time__837879871
+    sentAt : Time__30997584
   };
-type Message__412520268 =
+type Message__325928945 =
   {
     bookingId : Nat;
     content : Text;
     id : Nat;
     read : Bool;
     sender : Principal;
-    sentAt : Time__837879871
+    sentAt : Time__30997584
   };
-type Message__666981951 =
-  {
-    bookingId : Nat;
-    content : Text;
-    id : Nat;
-    read : Bool;
-    sender : Principal;
-    sentAt : Time__837879871
-  };
-type Message__918142832 =
-  {
-    bookingId : Nat;
-    content : Text;
-    id : Nat;
-    read : Bool;
-    sender : Principal;
-    sentAt : Time__837879871
-  };
-type Microsite__414787106 =
-  {
-    aboutCopy : Text;
-    accentColor : ?Text;
-    blockOrder : [Text];
-    coverImage : ?Blob;
-    createdAt : Time__837879871;
-    generatedAt : ?Time__837879871;
-    heroCopy : Text;
-    id : Nat;
-    providerId : Nat;
-    published : Bool;
-    servicesCopy : Text;
-    slug : Text;
-    updatedAt : Time__837879871
-  };
-type Microsite__709097163 =
-  {
-    aboutCopy : Text;
-    accentColor : ?Text;
-    blockOrder : [Text];
-    coverImage : ?Blob;
-    createdAt : Timestamp__227645062;
-    generatedAt : ?Timestamp__227645062;
-    heroCopy : Text;
-    id : Nat;
-    providerId : Nat;
-    published : Bool;
-    servicesCopy : Text;
-    slug : Text;
-    updatedAt : Timestamp__227645062
-  };
+type Nat__58649523 = Nat__920180692;
 type Nat__920180692 = Nat;
-type Nat__93962160 = Nat__920180692;
-type NewActor__1015894599 =
-  {
-    accessControlState : AccessControlState__836714403;
-    bookings : Map__246123559<Nat, Booking__458484305>;
-    emailNotificationsEnabled : {var value : Bool};
-    listings : Map__246123559<Nat, ServiceListing__244202728>;
-    messages : Map__246123559<Nat, Message__412520268>;
-    nextBookingId : {var value : Nat};
-    nextListingId : {var value : Nat};
-    nextMessageId : {var value : Nat};
-    nextProviderId : {var value : Nat};
-    nextReviewId : {var value : Nat};
-    nextSlotId : {var value : Nat};
-    openAIApiKey : {var value : ?Text};
-    providers : Map__246123559<Nat, Provider__100172329>;
-    reviews : Map__246123559<Nat, Review__61739317>;
-    slots : Map__246123559<Nat, AvailabilitySlot__427386040>;
-    users : Map__246123559<Principal, NewUser__108338321>
-  };
-type NewActor__186407608 =
-  {
-    accessControlState : AccessControlState__836714403;
-    bookings : Map__246123559<Nat, Booking__938269293>;
-    listings : Map__246123559<Nat, ServiceListing__449184242>;
-    messages : Map__246123559<Nat, Message__918142832>;
-    nextBookingId : {var value : Nat};
-    nextListingId : {var value : Nat};
-    nextMessageId : {var value : Nat};
-    nextProviderId : {var value : Nat};
-    nextReviewId : {var value : Nat};
-    nextSlotId : {var value : Nat};
-    openAIApiKey : {var value : ?Text};
-    providers : Map__246123559<Nat, Provider__650698860>;
-    reviews : Map__246123559<Nat, Review__756328942>;
-    slots : Map__246123559<Nat, AvailabilitySlot__232763764>;
-    users : Map__246123559<Principal, NewUser__73460903>
-  };
 type NewActor__366232100 =
   {
-    accessControlState : AccessControlState__836714403;
-    bookings : Map__246123559<Nat, Booking__786895355>;
-    listings : Map__246123559<Nat, ServiceListing__664186804>;
-    messages : Map__246123559<Nat, Message__142762545>;
+    accessControlState : AccessControlState__201339279;
+    bookings : Map__386906547<Nat, Booking__786895355>;
+    listings : Map__386906547<Nat, ServiceListing__664186804>;
+    messages : Map__386906547<Nat, Message__142762545>;
     nextBookingId : {var value : Nat};
     nextListingId : {var value : Nat};
     nextMessageId : {var value : Nat};
@@ -442,92 +208,40 @@ type NewActor__366232100 =
     nextReviewId : {var value : Nat};
     nextSlotId : {var value : Nat};
     openAIApiKey : {var value : ?Text};
-    providers : Map__246123559<Nat, Provider__919754537>;
-    reviews : Map__246123559<Nat, Review__1010530932>;
-    slots : Map__246123559<Nat, AvailabilitySlot__364381241>;
-    users : Map__246123559<Principal, User__394909191>
+    providers : Map__386906547<Nat, Provider__919754537>;
+    reviews : Map__386906547<Nat, Review__1010530932>;
+    slots : Map__386906547<Nat, AvailabilitySlot__364381241>;
+    users : Map__386906547<Principal, User__394909191>
   };
-type NewActor__843856202 =
+type NewActor__861681917 =
   {
-    accessControlState : AccessControlState__836714403;
-    assistantSessions :
-      Map__246123559<Principal, [AssistantMessage__40534530]>;
-    bookings : Map__246123559<Nat, Booking__349780187>;
-    communityReports : Map__246123559<Nat, CommunityReport__954963139>;
-    disputes : Map__246123559<Nat, Dispute__1020202113>;
-    docs : Map__246123559<Nat, Doc__423026771>;
-    emailNotificationsEnabled : {var value : Bool};
-    listings : Map__246123559<Nat, ServiceListing__252717593>;
-    messages : Map__246123559<Nat, Message__666981951>;
-    microsites : Map__246123559<Nat, Microsite__414787106>;
+    accessControlState : AccessControlState__201339279;
+    bookings : Map__386906547<Nat, Booking__129571824>;
+    identities : Map__386906547<Principal, IdentityAttributes__44633550>;
+    listings : Map__386906547<Nat, ServiceListing__1059395505>;
+    messages : Map__386906547<Nat, Message__325928945>;
     nextBookingId : {var value : Nat};
-    nextDisputeId : {var value : Nat};
-    nextDocId : {var value : Nat};
     nextListingId : {var value : Nat};
     nextMessageId : {var value : Nat};
-    nextMicrositeId : {var value : Nat};
     nextProviderId : {var value : Nat};
-    nextReferralId : {var value : Nat};
-    nextReportId : {var value : Nat};
     nextReviewId : {var value : Nat};
-    nextRewardLedgerId : {var value : Nat};
     nextSlotId : {var value : Nat};
     openAIApiKey : {var value : ?Text};
-    providerVerifications : Map__246123559<Nat, VerificationTiers__547097500>;
-    providers : Map__246123559<Nat, Provider__59288027>;
-    referrals : Map__246123559<Nat, Referral__245383227>;
-    reviews : Map__246123559<Nat, Review__190085887>;
-    rewardLedger : Map__246123559<Nat, RewardLedgerEntry__164707693>;
-    rewards : Map__246123559<Principal, RewardProfile__1018600529>;
-    slots : Map__246123559<Nat, AvailabilitySlot__34843434>;
-    users : Map__246123559<Principal, NewUser__578931609>
+    providers : Map__386906547<Nat, Provider__865079439>;
+    reviews : Map__386906547<Nat, Review__585328811>;
+    slots : Map__386906547<Nat, AvailabilitySlot__799403882>;
+    users : Map__386906547<Principal, User__896762238>
   };
-type NewUser__108338321 =
-  {
-    avatar : ?Blob;
-    createdAt : Time__837879871;
-    displayName : Text;
-    email : ?Text;
-    phone : ?Text;
-    principal : Principal;
-    role : MarketplaceRole__982213334;
-    updatedAt : Time__837879871;
-    workPhotos : [Blob]
-  };
-type NewUser__578931609 =
-  {
-    avatar : ?Blob;
-    createdAt : Time__837879871;
-    displayName : Text;
-    email : ?Text;
-    phone : ?Text;
-    principal : Principal;
-    role : MarketplaceRole__536087465;
-    updatedAt : Time__837879871;
-    workPhotos : [Blob]
-  };
-type NewUser__73460903 =
-  {
-    avatar : ?Blob;
-    createdAt : Time__837879871;
-    displayName : Text;
-    email : ?Text;
-    phone : ?Text;
-    principal : Principal;
-    role : MarketplaceRole__1007207108;
-    updatedAt : Time__837879871;
-    workPhotos : [Blob]
-  };
-type Node__279997185<K, V> =
-  {#internal : Internal__455405067<K, V>; #leaf : Leaf__114713147<K, V>};
+type Node__430031793<K, V> =
+  {#internal : Internal__161573640<K, V>; #leaf : Leaf__1045638083<K, V>};
 type NoiseLevel__137511242 = {#Buzzing; #Moderate; #Quiet};
 type NoiseLevel__661685751 = {#Buzzing; #Moderate; #Quiet};
-type OldActor__1072275310 =
+type OldActor__220611212 =
   {
-    accessControlState : AccessControlState__836714403;
-    bookings : Map__246123559<Nat, Booking__938269293>;
-    listings : Map__246123559<Nat, ServiceListing__449184242>;
-    messages : Map__246123559<Nat, Message__918142832>;
+    accessControlState : AccessControlState__201339279;
+    bookings : Map__386906547<Nat, Booking__129571824>;
+    listings : Map__386906547<Nat, ServiceListing__1059395505>;
+    messages : Map__386906547<Nat, Message__325928945>;
     nextBookingId : {var value : Nat};
     nextListingId : {var value : Nat};
     nextMessageId : {var value : Nat};
@@ -535,146 +249,26 @@ type OldActor__1072275310 =
     nextReviewId : {var value : Nat};
     nextSlotId : {var value : Nat};
     openAIApiKey : {var value : ?Text};
-    providers : Map__246123559<Nat, Provider__650698860>;
-    reviews : Map__246123559<Nat, Review__756328942>;
-    slots : Map__246123559<Nat, AvailabilitySlot__232763764>;
-    users : Map__246123559<Principal, OldUser__994484552>
-  };
-type OldActor__423355138 =
-  {
-    accessControlState : AccessControlState__836714403;
-    bookings : Map__246123559<Nat, Booking__349780187>;
-    emailNotificationsEnabled : {var value : Bool};
-    listings : Map__246123559<Nat, ServiceListing__252717593>;
-    messages : Map__246123559<Nat, Message__666981951>;
-    nextBookingId : {var value : Nat};
-    nextListingId : {var value : Nat};
-    nextMessageId : {var value : Nat};
-    nextProviderId : {var value : Nat};
-    nextReviewId : {var value : Nat};
-    nextSlotId : {var value : Nat};
-    openAIApiKey : {var value : ?Text};
-    providers : Map__246123559<Nat, Provider__59288027>;
-    reviews : Map__246123559<Nat, Review__190085887>;
-    slots : Map__246123559<Nat, AvailabilitySlot__34843434>;
-    users : Map__246123559<Principal, OldUser__896915742>
-  };
-type OldActor__462703466 =
-  {
-    accessControlState : AccessControlState__836714403;
-    bookings : Map__246123559<Nat, Booking__458484305>;
-    listings : Map__246123559<Nat, ServiceListing__244202728>;
-    messages : Map__246123559<Nat, Message__412520268>;
-    nextBookingId : {var value : Nat};
-    nextListingId : {var value : Nat};
-    nextMessageId : {var value : Nat};
-    nextProviderId : {var value : Nat};
-    nextReviewId : {var value : Nat};
-    nextSlotId : {var value : Nat};
-    openAIApiKey : {var value : ?Text};
-    providers : Map__246123559<Nat, Provider__100172329>;
-    reviews : Map__246123559<Nat, Review__61739317>;
-    slots : Map__246123559<Nat, AvailabilitySlot__427386040>;
-    users : Map__246123559<Principal, OldUser__55263544>
+    providers : Map__386906547<Nat, Provider__865079439>;
+    reviews : Map__386906547<Nat, Review__585328811>;
+    slots : Map__386906547<Nat, AvailabilitySlot__799403882>;
+    users : Map__386906547<Principal, User__896762238>
   };
 type OldActor__640194372 =
   {
-    accessControlState : AccessControlState__836714403;
-    locations : Map__246123559<Text, Location__876069989>;
-    userProfiles : Map__246123559<Principal, Profile__770012979>
-  };
-type OldUser__55263544 =
-  {
-    avatar : ?Blob;
-    createdAt : Time__837879871;
-    displayName : Text;
-    email : ?Text;
-    phone : ?Text;
-    principal : Principal;
-    role : MarketplaceRole__982213334;
-    updatedAt : Time__837879871;
-    workPhotos : [Blob]
-  };
-type OldUser__896915742 =
-  {
-    avatar : ?Blob;
-    createdAt : Time__837879871;
-    displayName : Text;
-    email : ?Text;
-    phone : ?Text;
-    principal : Principal;
-    role : MarketplaceRole__536087465;
-    updatedAt : Time__837879871;
-    workPhotos : [Blob]
-  };
-type OldUser__994484552 =
-  {
-    avatar : ?Blob;
-    createdAt : Time__837879871;
-    displayName : Text;
-    email : ?Text;
-    phone : ?Text;
-    principal : Principal;
-    role : MarketplaceRole__1007207108;
-    updatedAt : Time__837879871
+    accessControlState : AccessControlState__201339279;
+    locations : Map__386906547<Text, Location__876069989>;
+    userProfiles : Map__386906547<Principal, Profile__770012979>
   };
 type Profile__544827657 = {name : Text};
 type Profile__770012979 = {name : Text};
-type Provider__100172329 =
-  {
-    companyName : Text;
-    createdAt : Time__837879871;
-    description : ?Text;
-    id : Nat;
-    logo : ?Blob;
-    ownerPrincipal : Principal;
-    ratingCount : Nat;
-    ratingSum : Nat;
-    serviceAreas : [Text];
-    serviceCategories : [ServiceCategory__534672948];
-    updatedAt : Time__837879871;
-    verificationNote : ?Text;
-    verificationStatus : VerificationStatus__534100698
-  };
-type Provider__59288027 =
-  {
-    companyName : Text;
-    createdAt : Time__837879871;
-    description : ?Text;
-    id : Nat;
-    logo : ?Blob;
-    ownerPrincipal : Principal;
-    ratingCount : Nat;
-    ratingSum : Nat;
-    serviceAreas : [Text];
-    serviceCategories : [ServiceCategory__111985984];
-    updatedAt : Time__837879871;
-    verificationNote : ?Text;
-    verificationStatus : VerificationStatus__105674916
-  };
-type Provider__650698860 =
-  {
-    companyName : Text;
-    createdAt : Time__837879871;
-    description : ?Text;
-    id : Nat;
-    logo : ?Blob;
-    ownerPrincipal : Principal;
-    ratingCount : Nat;
-    ratingSum : Nat;
-    serviceAreas : [Text];
-    serviceCategories : [ServiceCategory__17436259];
-    updatedAt : Time__837879871;
-    verificationNote : ?Text;
-    verificationStatus : VerificationStatus__975055463
-  };
 type Provider__839699111 =
   {
     companyName : Text;
     createdAt : Timestamp__427537507;
     description : ?Text;
     id : Nat;
-    logo : ?ExternalBlob__675229786;
+    logo : ?ExternalBlob__220559234;
     ownerPrincipal : UserId__799316327;
     ratingCount : Nat;
     ratingSum : Nat;
@@ -684,10 +278,26 @@ type Provider__839699111 =
     verificationNote : ?Text;
     verificationStatus : VerificationStatus__216305285
   };
+type Provider__865079439 =
+  {
+    companyName : Text;
+    createdAt : Time__30997584;
+    description : ?Text;
+    id : Nat;
+    logo : ?Blob;
+    ownerPrincipal : Principal;
+    ratingCount : Nat;
+    ratingSum : Nat;
+    serviceAreas : [Text];
+    serviceCategories : [ServiceCategory__384656467];
+    updatedAt : Time__30997584;
+    verificationNote : ?Text;
+    verificationStatus : VerificationStatus__906335223
+  };
 type Provider__919754537 =
   {
     companyName : Text;
-    createdAt : Time__837879871;
+    createdAt : Time__30997584;
     description : ?Text;
     id : Nat;
     logo : ?Blob;
@@ -696,91 +306,54 @@ type Provider__919754537 =
     ratingSum : Nat;
     serviceAreas : [Text];
     serviceCategories : [ServiceCategory__714520561];
-    updatedAt : Time__837879871;
+    updatedAt : Time__30997584;
     verificationNote : ?Text;
     verificationStatus : VerificationStatus__675509032
   };
 type Rating__1001775987 =
   {
-    createdAt : Time__837879871;
+    createdAt : Time__30997584;
     description : ?Text;
     editCount : Nat;
     noiseLevel : NoiseLevel__137511242;
-    updatedAt : Time__837879871;
+    updatedAt : Time__30997584;
     userId : Principal;
     wifiSpeed : WifiSpeed__510167671
   };
 type Rating__14645485 =
   {
-    createdAt : Time__837879871;
+    createdAt : Time__30997584;
     description : ?Text;
     editCount : Nat;
     noiseLevel : NoiseLevel__661685751;
-    updatedAt : Time__837879871;
+    updatedAt : Time__30997584;
     userId : Principal;
     wifiSpeed : WifiSpeed__860782173
   };
-type ReferralStatus__255550481 = {#awarded; #expired; #pending};
-type ReferralStatus__970984892 = {#awarded; #expired; #pending};
-type Referral__245383227 =
-  {
-    awardedAt : ?Time__837879871;
-    createdAt : Time__837879871;
-    id : Nat;
-    referee : Principal;
-    referrer : Principal;
-    status : ReferralStatus__970984892
-  };
-type Referral__981574596 =
-  {
-    awardedAt : ?Timestamp__227645062;
-    createdAt : Timestamp__227645062;
-    id : Nat;
-    referee : UserId__491264504;
-    referrer : UserId__491264504;
-    status : ReferralStatus__255550481
-  };
-type ReportStatus__597953829 = {#dismissed; #open; #resolved; #reviewing};
-type ReportStatus__81147912 = {#dismissed; #open; #resolved; #reviewing};
-type ReportTargetType__252789264 = {#listing; #provider; #review; #user};
-type ReportTargetType__807853023 = {#listing; #provider; #review; #user};
 type Review__1010530932 =
   {
     bookingId : Nat;
-    createdAt : Time__837879871;
+    createdAt : Time__30997584;
     customerId : Principal;
     hidden : Bool;
     id : Nat;
     providerId : Nat;
     providerResponse : ?Text;
     rating : Nat;
-    updatedAt : Time__837879871;
+    updatedAt : Time__30997584;
     writtenText : Text
   };
-type Review__190085887 =
+type Review__585328811 =
   {
     bookingId : Nat;
-    createdAt : Time__837879871;
+    createdAt : Time__30997584;
     customerId : Principal;
     hidden : Bool;
     id : Nat;
     providerId : Nat;
     providerResponse : ?Text;
     rating : Nat;
-    updatedAt : Time__837879871;
-    writtenText : Text
-  };
-type Review__61739317 =
-  {
-    bookingId : Nat;
-    createdAt : Time__837879871;
-    customerId : Principal;
-    hidden : Bool;
-    id : Nat;
-    providerId : Nat;
-    providerResponse : ?Text;
-    rating : Nat;
-    updatedAt : Time__837879871;
+    updatedAt : Time__30997584;
     writtenText : Text
   };
 type Review__628803791 =
@@ -796,72 +369,17 @@ type Review__628803791 =
     updatedAt : Timestamp__427537507;
     writtenText : Text
   };
-type Review__756328942 =
-  {
-    bookingId : Nat;
-    createdAt : Time__837879871;
-    customerId : Principal;
-    hidden : Bool;
-    id : Nat;
-    providerId : Nat;
-    providerResponse : ?Text;
-    rating : Nat;
-    updatedAt : Time__837879871;
-    writtenText : Text
-  };
-type RewardLedgerEntry__164707693 =
-  {
-    id : Nat;
-    points : Nat;
-    reason : Text;
-    timestamp : Time__837879871;
-    userId : Principal
-  };
-type RewardLedgerEntry__742782236 =
-  {
-    id : Nat;
-    points : Nat;
-    reason : Text;
-    timestamp : Timestamp__227645062;
-    userId : UserId__491264504
-  };
-type RewardProfile__1018600529 =
-  {
-    badges : [Text];
-    points : Nat;
-    referralCode : Text;
-    streak : Nat;
-    tier : RewardTier__856747331;
-    updatedAt : Time__837879871;
-    userId : Principal
-  };
-type RewardProfile__676872948 =
-  {
-    badges : [Text];
-    points : Nat;
-    referralCode : Text;
-    streak : Nat;
-    tier : RewardTier__105725399;
-    updatedAt : Timestamp__227645062;
-    userId : UserId__491264504
-  };
-type RewardTier__105725399 = {#bronze; #gold; #platinum; #silver};
-type RewardTier__856747331 = {#bronze; #gold; #platinum; #silver};
-type ServiceCategory__111985984 =
-  {#boxTruck; #moving; #relocation; #trashHaul};
-type ServiceCategory__17436259 =
-  {#boxTruck; #moving; #relocation; #trashHaul};
 type ServiceCategory__215373617 =
   {#boxTruck; #moving; #relocation; #trashHaul};
-type ServiceCategory__534672948 =
+type ServiceCategory__384656467 =
   {#boxTruck; #moving; #relocation; #trashHaul};
 type ServiceCategory__714520561 =
   {#boxTruck; #moving; #relocation; #trashHaul};
-type ServiceListing__244202728 =
+type ServiceListing__1059395505 =
   {
     active : Bool;
-    category : ServiceCategory__534672948;
-    createdAt : Time__837879871;
+    category : ServiceCategory__384656467;
+    createdAt : Time__30997584;
     description : Text;
     id : Nat;
     photos : [Blob];
@@ -870,37 +388,7 @@ type ServiceListing__244202728 =
     providerId : Nat;
     serviceArea : Text;
     title : Text;
-    updatedAt : Time__837879871
-  };
-type ServiceListing__252717593 =
-  {
-    active : Bool;
-    category : ServiceCategory__111985984;
-    createdAt : Time__837879871;
-    description : Text;
-    id : Nat;
-    photos : [Blob];
-    priceCents : Nat;
-    priceUnit : Text;
-    providerId : Nat;
-    serviceArea : Text;
-    title : Text;
-    updatedAt : Time__837879871
-  };
-type ServiceListing__449184242 =
-  {
-    active : Bool;
-    category : ServiceCategory__17436259;
-    createdAt : Time__837879871;
-    description : Text;
-    id : Nat;
-    photos : [Blob];
-    priceCents : Nat;
-    priceUnit : Text;
-    providerId : Nat;
-    serviceArea : Text;
-    title : Text;
-    updatedAt : Time__837879871
+    updatedAt : Time__30997584
   };
 type ServiceListing__555886689 =
   {
@@ -909,7 +397,7 @@ type ServiceListing__555886689 =
     createdAt : Timestamp__427537507;
     description : Text;
     id : Nat;
-    photos : [ExternalBlob__675229786];
+    photos : [ExternalBlob__220559234];
     priceCents : Nat;
     priceUnit : Text;
     providerId : Nat;
@@ -921,7 +409,7 @@ type ServiceListing__664186804 =
   {
     active : Bool;
     category : ServiceCategory__714520561;
-    createdAt : Time__837879871;
+    createdAt : Time__30997584;
     description : Text;
     id : Nat;
     photos : [Blob];
@@ -930,197 +418,120 @@ type ServiceListing__664186804 =
     providerId : Nat;
     serviceArea : Text;
     title : Text;
-    updatedAt : Time__837879871
+    updatedAt : Time__30997584
   };
-type SlotStatus__141139919 = {#available; #blocked};
-type SlotStatus__17471227 = {#available; #blocked};
 type SlotStatus__268547244 = {#available; #blocked};
 type SlotStatus__3062101 = {#available; #blocked};
-type SlotStatus__432572722 = {#available; #blocked};
-type Time__72294698 = Int__849411254;
-type Time__837879871 = Time__72294698;
-type Timestamp__227645062 = Time__837879871;
-type Timestamp__427537507 = Time__837879871;
-type UserId__491264504 = Principal;
+type SlotStatus__90836664 = {#available; #blocked};
+type Time__1031799312 = Int__895066125;
+type Time__30997584 = Time__1031799312;
+type Timestamp__427537507 = Time__30997584;
 type UserId__799316327 = Principal;
-type UserRole__686137147 = {#admin; #guest; #user};
+type UserRole__91647283 = {#admin; #guest; #user};
 type User__394909191 =
   {
     avatar : ?Blob;
-    createdAt : Time__837879871;
+    createdAt : Time__30997584;
     displayName : Text;
     email : ?Text;
     phone : ?Text;
     principal : Principal;
     role : MarketplaceRole__376112206;
-    updatedAt : Time__837879871
+    updatedAt : Time__30997584
   };
 type User__41741042 =
   {
-    avatar : ?ExternalBlob__675229786;
+    avatar : ?ExternalBlob__220559234;
     createdAt : Timestamp__427537507;
     displayName : Text;
     email : ?Text;
     phone : ?Text;
     principal : UserId__799316327;
     role : MarketplaceRole__162329991;
-    updatedAt : Timestamp__427537507;
-    workPhotos : [ExternalBlob__675229786]
+    updatedAt : Timestamp__427537507
   };
-type VerificationStatus__105674916 =
-  {#approved; #pending; #rejected; #suspended};
+type User__896762238 =
+  {
+    avatar : ?Blob;
+    createdAt : Time__30997584;
+    displayName : Text;
+    email : ?Text;
+    phone : ?Text;
+    principal : Principal;
+    role : MarketplaceRole__1011599025;
+    updatedAt : Time__30997584
+  };
 type VerificationStatus__216305285 =
-  {#approved; #pending; #rejected; #suspended};
-type VerificationStatus__534100698 =
   {#approved; #pending; #rejected; #suspended};
 type VerificationStatus__675509032 =
   {#approved; #pending; #rejected; #suspended};
-type VerificationStatus__975055463 =
+type VerificationStatus__906335223 =
   {#approved; #pending; #rejected; #suspended};
-type VerificationTierRecord__801594819 =
-  {
-    note : ?Text;
-    status : VerificationTierStatus__689823637;
-    verifiedAt : ?Timestamp__227645062
-  };
-type VerificationTierRecord__942557807 =
-  {
-    note : ?Text;
-    status : VerificationTierStatus__531986300;
-    verifiedAt : ?Time__837879871
-  };
-type VerificationTierStatus__531986300 =
-  {#approved; #expired; #pending; #rejected; #unverified};
-type VerificationTierStatus__689823637 =
-  {#approved; #expired; #pending; #rejected; #unverified};
-type VerificationTiers__547097500 =
-  {
-    background : VerificationTierRecord__942557807;
-    business : VerificationTierRecord__942557807;
-    identity : VerificationTierRecord__942557807;
-    insurance : VerificationTierRecord__942557807
-  };
-type VerificationTiers__791520730 =
-  {
-    background : VerificationTierRecord__801594819;
-    business : VerificationTierRecord__801594819;
-    identity : VerificationTierRecord__801594819;
-    insurance : VerificationTierRecord__801594819
-  };
 type WifiSpeed__510167671 = {#Fast; #Okay; #Slow};
 type WifiSpeed__860782173 = {#Fast; #Okay; #Slow};
 {
   "20250101_000000_Init" :
     {} ->
       {
-        accessControlState : AccessControlState__836714403;
-        locations : Map__246123559<Text, Location__128901279>;
-        userProfiles : Map__246123559<Principal, Profile__544827657>
+        accessControlState : AccessControlState__201339279;
+        locations : Map__386906547<Text, Location__128901279>;
+        userProfiles : Map__386906547<Principal, Profile__544827657>
       };
   "20260722_000000" : (old : OldActor__640194372) -> NewActor__366232100;
-  "20260722_055940" : (old : OldActor__1072275310) -> NewActor__186407608;
-  "20260723_151031" : (old : OldActor__462703466) -> NewActor__1015894599;
-  "20260724_000000" : (old : OldActor__423355138) -> NewActor__843856202
+  "20260809_000000" : (old : OldActor__220611212) -> NewActor__861681917
 }
 actor  {
   stable accessControlState :
     {
       var adminAssigned : Bool;
-      userRoles : Map__246123559<Principal, UserRole__686137147>
-    };
-  stable assistantSessions :
-    {
-      var root :
-        Node__279997185<UserId__491264504, [AssistantMessage__879167442]>;
-      var size : Nat__93962160
+      userRoles : Map__386906547<Principal, UserRole__91647283>
     };
   stable bookings :
     {
-      var root : Node__279997185<Nat, Booking__796173008>;
-      var size : Nat__93962160
+      var root : Node__430031793<Nat, Booking__796173008>;
+      var size : Nat__58649523
     };
-  stable communityReports :
+  stable identities :
     {
-      var root : Node__279997185<Nat, CommunityReport__253385462>;
-      var size : Nat__93962160
+      var root :
+        Node__430031793<AuthId__293791324, IdentityAttributes__562917176>;
+      var size : Nat__58649523
     };
-  stable disputes :
-    {
-      var root : Node__279997185<Nat, Dispute__66794884>;
-      var size : Nat__93962160
-    };
-  stable docs :
-    {
-      var root : Node__279997185<Nat, Doc__830470140>;
-      var size : Nat__93962160
-    };
-  stable emailNotificationsEnabled : {var value : Bool};
   stable listings :
     {
-      var root : Node__279997185<Nat, ServiceListing__555886689>;
-      var size : Nat__93962160
+      var root : Node__430031793<Nat, ServiceListing__555886689>;
+      var size : Nat__58649523
     };
   stable messages :
     {
-      var root : Node__279997185<Nat, Message__140784742>;
-      var size : Nat__93962160
-    };
-  stable microsites :
-    {
-      var root : Node__279997185<Nat, Microsite__709097163>;
-      var size : Nat__93962160
+      var root : Node__430031793<Nat, Message__140784742>;
+      var size : Nat__58649523
     };
   stable nextBookingId : {var value : Nat};
-  stable nextDisputeId : {var value : Nat};
-  stable nextDocId : {var value : Nat};
   stable nextListingId : {var value : Nat};
   stable nextMessageId : {var value : Nat};
-  stable nextMicrositeId : {var value : Nat};
   stable nextProviderId : {var value : Nat};
-  stable nextReferralId : {var value : Nat};
-  stable nextReportId : {var value : Nat};
   stable nextReviewId : {var value : Nat};
-  stable nextRewardLedgerId : {var value : Nat};
   stable nextSlotId : {var value : Nat};
   stable openAIApiKey : {var value : ?Text};
-  stable providerVerifications :
-    {
-      var root : Node__279997185<Nat, VerificationTiers__791520730>;
-      var size : Nat__93962160
-    };
   stable providers :
     {
-      var root : Node__279997185<Nat, Provider__839699111>;
-      var size : Nat__93962160
-    };
-  stable referrals :
-    {
-      var root : Node__279997185<Nat, Referral__981574596>;
-      var size : Nat__93962160
+      var root : Node__430031793<Nat, Provider__839699111>;
+      var size : Nat__58649523
     };
   stable reviews :
     {
-      var root : Node__279997185<Nat, Review__628803791>;
-      var size : Nat__93962160
-    };
-  stable rewardLedger :
-    {
-      var root : Node__279997185<Nat, RewardLedgerEntry__742782236>;
-      var size : Nat__93962160
-    };
-  stable rewards :
-    {
-      var root : Node__279997185<UserId__491264504, RewardProfile__676872948>;
-      var size : Nat__93962160
+      var root : Node__430031793<Nat, Review__628803791>;
+      var size : Nat__58649523
     };
   stable slots :
     {
-      var root : Node__279997185<Nat, AvailabilitySlot__610617927>;
-      var size : Nat__93962160
+      var root : Node__430031793<Nat, AvailabilitySlot__610617927>;
+      var size : Nat__58649523
     };
   stable users :
     {
-      var root : Node__279997185<UserId__799316327, User__41741042>;
-      var size : Nat__93962160
+      var root : Node__430031793<UserId__799316327, User__41741042>;
+      var size : Nat__58649523
     }
 };

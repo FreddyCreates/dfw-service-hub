@@ -3,13 +3,10 @@
 // title/description/price/photos/provider name, and a booking dialog that
 // collects date/time/address/job details/customer note and calls
 // useCreateBooking. Same booking-dialog pattern as ProviderDetail.
-// Surfaces trust score + verification tiers on the provider info section,
-// skeleton loading states, fade-in-up motion, and SLA indicators on the CTA.
 
 import { EmptyState } from "@/components/EmptyState";
-import { Skeleton, SkeletonCard, SkeletonList } from "@/components/Skeleton";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { StarRating } from "@/components/StarRating";
-import { TrustBadge } from "@/components/TrustBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,11 +25,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useCreateBooking,
-  useGenerateBookingMessage,
   useGetListing,
   useGetProvider,
-  useGetTrustScore,
-  useGetVerification,
 } from "@/hooks/useQueries";
 import {
   type BookingInput,
@@ -48,12 +42,9 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
-  Loader2,
   MapPin,
   Package,
   ShieldCheck,
-  Timer,
-  Wand2,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -77,26 +68,6 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-// SLA indicators shown near the booking CTA — communicate the embedded
-// service-level protocol (typical response + completion windows).
-function SlaIndicators({ className }: { className?: string }) {
-  return (
-    <div
-      className={`flex flex-wrap items-center gap-2 text-xs font-body text-muted-foreground ${className ?? ""}`}
-      data-ocid="listing_detail.sla"
-    >
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1">
-        <Timer className="w-3.5 h-3.5 text-success" aria-hidden />
-        Responds in ~2 hrs
-      </span>
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1">
-        <Clock className="w-3.5 h-3.5 text-primary" aria-hidden />
-        Same-day scheduling
-      </span>
-    </div>
-  );
-}
-
 export function ListingDetail() {
   const { listingId } = useParams({ strict: false }) as {
     listingId?: string;
@@ -112,13 +83,8 @@ export function ListingDetail() {
   const { data: provider, isLoading: providerLoading } = useGetProvider(
     listing?.providerId ?? null,
   );
-  const { data: trustScore } = useGetTrustScore(listing?.providerId ?? null);
-  const { data: verification } = useGetVerification(
-    listing?.providerId ?? null,
-  );
 
   const createBooking = useCreateBooking();
-  const generateBookingMessage = useGenerateBookingMessage();
 
   const [bookingOpen, setBookingOpen] = useState(false);
   const [date, setDate] = useState("");
@@ -144,32 +110,6 @@ export function ListingDetail() {
     setAddress("");
     setJobDetails("");
     setCustomerNote("");
-  };
-
-  const handleGenerateMessage = () => {
-    if (!listing) return;
-    const contextParts: string[] = [
-      `Service category: ${CATEGORY_LABELS[listing.category]}`,
-      `Listing title: ${listing.title}`,
-    ];
-    if (provider) contextParts.push(`Provider: ${provider.companyName}`);
-    if (date) contextParts.push(`Requested date: ${date}`);
-    if (time) contextParts.push(`Requested time: ${time}`);
-    if (address) contextParts.push(`Service address: ${address}`);
-    if (jobDetails) contextParts.push(`Job details: ${jobDetails}`);
-    const bookingContext = contextParts.join("\n");
-    generateBookingMessage.mutate(bookingContext, {
-      onSuccess: (message) => {
-        setCustomerNote(message);
-        toast.success("Draft message generated — review and edit as needed.");
-      },
-      onError: (err) =>
-        toast.error(
-          err instanceof Error
-            ? err.message
-            : "Could not generate a message. Please try again.",
-        ),
-    });
   };
 
   const handleSubmitBooking = (e: React.FormEvent) => {
@@ -210,21 +150,10 @@ export function ListingDetail() {
   if (listingLoading || providerLoading) {
     return (
       <div
-        className="container mx-auto px-4 lg:px-6 py-10"
+        className="container mx-auto px-4 lg:px-6 py-16"
         data-ocid="page.listing_detail"
       >
-        <div className="max-w-5xl mx-auto animate-fade-in-up">
-          <Skeleton className="h-4 w-32 mb-4" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-4">
-              <Skeleton className="h-56 w-full rounded-xl" />
-              <SkeletonCard withMedia={false} />
-            </div>
-            <div className="space-y-4">
-              <SkeletonCard withMedia={false} />
-            </div>
-          </div>
-        </div>
+        <LoadingSpinner label="Loading listing" />
       </div>
     );
   }
@@ -277,7 +206,7 @@ export function ListingDetail() {
 
       <div className="container mx-auto px-4 lg:px-6 grid grid-cols-1 lg:grid-cols-3 gap-6 py-6">
         {/* Main listing column */}
-        <section className="lg:col-span-2 flex flex-col gap-6 animate-fade-in-up">
+        <section className="lg:col-span-2 flex flex-col gap-6">
           {/* Photos */}
           {listing.photos.length > 0 ? (
             <div
@@ -361,7 +290,7 @@ export function ListingDetail() {
         </section>
 
         {/* Sidebar: provider + booking */}
-        <aside className="lg:col-span-1 flex flex-col gap-6 animate-fade-in-up">
+        <aside className="lg:col-span-1 flex flex-col gap-6">
           <Card className="py-0 lg:sticky lg:top-6">
             <CardHeader>
               <CardTitle className="font-display text-base font-semibold text-foreground">
@@ -439,22 +368,13 @@ export function ListingDetail() {
                 <CalendarDays className="w-4 h-4" aria-hidden />
                 Book this service
               </Button>
-              {listing.active ? (
-                <SlaIndicators />
-              ) : (
+              {!listing.active ? (
                 <p className="text-xs text-muted-foreground font-body text-center">
                   This listing is not currently accepting bookings.
                 </p>
-              )}
+              ) : null}
             </CardContent>
           </Card>
-
-          {/* Trust & verification — embedded protocol surface */}
-          <TrustBadge
-            trustScore={trustScore ?? null}
-            verificationTiers={verification ?? null}
-            compact
-          />
         </aside>
       </div>
 
@@ -527,40 +447,15 @@ export function ListingDetail() {
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between gap-2">
-                <Label htmlFor="booking-note">
-                  Note to provider (optional)
-                </Label>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={handleGenerateMessage}
-                  disabled={generateBookingMessage.isPending}
-                  className="h-7 gap-1.5 text-xs text-primary border-primary/30 hover:bg-primary/10"
-                  data-ocid="listing_detail.ai_generate_message"
-                >
-                  {generateBookingMessage.isPending ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" aria-hidden />
-                  ) : (
-                    <Wand2 className="w-3.5 h-3.5" aria-hidden />
-                  )}
-                  Generate with AI
-                </Button>
-              </div>
+              <Label htmlFor="booking-note">Note to provider (optional)</Label>
               <Textarea
                 id="booking-note"
                 placeholder="Anything else the provider should know?"
                 value={customerNote}
                 onChange={(e) => setCustomerNote(e.target.value)}
-                rows={3}
+                rows={2}
                 data-ocid="listing_detail.booking_note"
               />
-              {generateBookingMessage.isPending ? (
-                <p className="text-xs text-muted-foreground font-body">
-                  Drafting your message…
-                </p>
-              ) : null}
             </div>
 
             <DialogFooter>

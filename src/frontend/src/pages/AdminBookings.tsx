@@ -1,15 +1,12 @@
 // AdminBookings — platform-wide bookings overview for admins.
 // Lists all bookings across providers with customer/provider info and status,
-// search + filter by status/date/category, dispute indicators, and a detail
-// dialog with the booking's message thread for dispute resolution.
-// Dark portal theme tokens, skeleton loading, and motion utilities.
+// search + filter by status/date/category, and a detail dialog with the
+// booking's message thread for dispute resolution.
 
 import { BookingStatusBadge } from "@/components/BookingStatusBadge";
-import { DisputeStatusBadge } from "@/components/DisputeStatusBadge";
 import { EmptyState } from "@/components/EmptyState";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { MessageBubble } from "@/components/MessageBubble";
-import { SkeletonList } from "@/components/Skeleton";
 import {
   Dialog,
   DialogContent,
@@ -24,9 +21,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   useGetThread,
-  useListDisputesByBooking,
   useListProviderBookings,
   useListProviders,
 } from "@/hooks/useQueries";
@@ -38,12 +35,9 @@ import {
   CATEGORY_SHORT,
   type ServiceCategory,
 } from "@/types";
-import { useInternetIdentity } from "@caffeineai/core-infrastructure";
 import {
-  AlertTriangle,
   Calendar,
   Clock,
-  Flag,
   MapPin,
   MessageSquare,
   Package,
@@ -69,34 +63,15 @@ function shortPrincipal(p: { toString: () => string }): string {
   return s.length > 12 ? `${s.slice(0, 6)}…${s.slice(-4)}` : s;
 }
 
-// Per-booking disputes fetcher — calls useListDisputesByBooking once at the
-// top level of a component (one hook per instance, never in a loop) and
-// reports whether the booking has any disputes up through a stable callback.
-function BookingDisputesFetcher({
-  bookingId,
-  onDisputes,
-}: {
-  bookingId: string;
-  onDisputes: (bookingId: string, hasDisputes: boolean) => void;
-}) {
-  const { data } = useListDisputesByBooking(bookingId);
-  useEffect(() => {
-    onDisputes(bookingId, (data ?? []).length > 0);
-  }, [data, bookingId, onDisputes]);
-  return null;
-}
-
 function BookingRow({
   booking,
   index,
   providerName,
-  hasDispute,
   onOpen,
 }: {
   booking: Booking;
   index: number;
   providerName: string;
-  hasDispute: boolean;
   onOpen: (b: Booking) => void;
 }) {
   return (
@@ -104,7 +79,7 @@ function BookingRow({
       type="button"
       onClick={() => onOpen(booking)}
       data-ocid={`admin_bookings.row.${index + 1}`}
-      className="w-full text-left p-4 rounded-xl border border-border bg-card shadow-subtle hover:shadow-md hover:border-primary/30 animate-card-hover-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="w-full text-left p-4 rounded-xl border border-border bg-card hover:shadow-sm hover:border-primary/30 transition-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex-1 min-w-0">
@@ -113,12 +88,6 @@ function BookingRow({
               {CATEGORY_SHORT[booking.category]}
             </span>
             <BookingStatusBadge status={booking.status} />
-            {hasDispute ? (
-              <span className="inline-flex items-center gap-1 rounded-full border border-destructive/40 bg-destructive/15 px-2 py-0.5 text-xs font-body font-medium text-destructive">
-                <AlertTriangle className="w-3 h-3" aria-hidden />
-                Disputed
-              </span>
-            ) : null}
           </div>
           <p className="text-sm text-muted-foreground font-body mt-1 truncate">
             {booking.jobDetails}
@@ -166,13 +135,12 @@ function ProviderBookingsFetcher({
 
 export function AdminBookings() {
   const { data: providers, isLoading: providersLoading } = useListProviders();
-  const { identity } = useInternetIdentity();
+  const { user } = useAuth();
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
   const [dateFilter, setDateFilter] = useState("");
-  const [disputedOnly, setDisputedOnly] = useState(false);
   const [selected, setSelected] = useState<Booking | null>(null);
 
   const providerNameById = useMemo(() => {
@@ -221,22 +189,6 @@ export function AdminBookings() {
     return bookingsByProvider.size < providers.length;
   }, [providers, bookingsByProvider]);
 
-  // Track which bookings have disputes via a callback-driven Set. Each
-  // BookingDisputesFetcher calls useListDisputesByBooking once at its top
-  // level (no hooks in loops) and reports up through a stable callback.
-  const disputedBookings = useMemo(() => new Set<string>(), []);
-  const [, setDisputedVersion] = useState(0);
-  const handleBookingDisputes = useMemo(
-    () => (bookingId: string, hasDisputes: boolean) => {
-      const prev = disputedBookings.has(bookingId);
-      if (prev === hasDisputes) return;
-      if (hasDisputes) disputedBookings.add(bookingId);
-      else disputedBookings.delete(bookingId);
-      setDisputedVersion((v) => v + 1);
-    },
-    [disputedBookings],
-  );
-
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return allBookings.filter((b) => {
@@ -244,20 +196,13 @@ export function AdminBookings() {
       const matchesCategory =
         categoryFilter === "all" || b.category === categoryFilter;
       const matchesDate = dateFilter === "" || b.scheduledDate === dateFilter;
-      const matchesDisputed = !disputedOnly || disputedBookings.has(b.id);
       const matchesSearch =
         q === "" ||
         b.jobDetails.toLowerCase().includes(q) ||
         b.address.toLowerCase().includes(q) ||
         (providerNameById.get(b.providerId) ?? "").toLowerCase().includes(q) ||
         b.customerId.toString().toLowerCase().includes(q);
-      return (
-        matchesStatus &&
-        matchesCategory &&
-        matchesDate &&
-        matchesDisputed &&
-        matchesSearch
-      );
+      return matchesStatus && matchesCategory && matchesDate && matchesSearch;
     });
   }, [
     allBookings,
@@ -265,17 +210,10 @@ export function AdminBookings() {
     statusFilter,
     categoryFilter,
     dateFilter,
-    disputedOnly,
     providerNameById,
-    disputedBookings,
   ]);
 
   const { data: thread, isLoading: threadLoading } = useGetThread(
-    selected?.id ?? null,
-  );
-
-  // Disputes for the selected booking — shown in the detail dialog.
-  const { data: selectedDisputes } = useListDisputesByBooking(
     selected?.id ?? null,
   );
 
@@ -284,7 +222,7 @@ export function AdminBookings() {
   return (
     <div className="bg-background" data-ocid="page.admin_bookings">
       <section className="container mx-auto px-4 lg:px-6 py-10 lg:py-14">
-        <div className="flex flex-col gap-2 mb-8 animate-fade-in-up">
+        <div className="flex flex-col gap-2 mb-8">
           <div className="flex items-center gap-2 text-primary">
             <Package className="w-5 h-5" aria-hidden />
             <span className="text-sm font-body font-medium">Admin</span>
@@ -294,13 +232,13 @@ export function AdminBookings() {
           </h1>
           <p className="text-muted-foreground font-body max-w-2xl">
             Monitor every booking across the DFW marketplace. Search, filter,
-            flag disputed bookings, and open any booking to review its message
-            thread for dispute resolution.
+            and open any booking to review its message thread for dispute
+            resolution.
           </p>
         </div>
 
         {/* Filters */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
           <div className="relative sm:col-span-2 lg:col-span-1">
             <Search
               className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground"
@@ -354,26 +292,10 @@ export function AdminBookings() {
             onChange={(e) => setDateFilter(e.target.value)}
             data-ocid="admin_bookings.date_filter"
           />
-          <Select
-            value={disputedOnly ? "disputed" : "all"}
-            onValueChange={(v) => setDisputedOnly(v === "disputed")}
-          >
-            <SelectTrigger data-ocid="admin_bookings.disputed_filter">
-              <SelectValue placeholder="Disputes" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All bookings</SelectItem>
-              <SelectItem value="disputed">Disputed only</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
 
         {isLoading ? (
-          <SkeletonList
-            count={4}
-            withMedia={false}
-            className="grid-cols-1 lg:grid-cols-2"
-          />
+          <LoadingSpinner label="Loading bookings" />
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={Package}
@@ -382,8 +304,7 @@ export function AdminBookings() {
               search ||
               statusFilter !== "all" ||
               categoryFilter !== "all" ||
-              dateFilter !== "" ||
-              disputedOnly
+              dateFilter !== ""
                 ? "Try adjusting your filters."
                 : "No bookings have been created yet."
             }
@@ -391,17 +312,13 @@ export function AdminBookings() {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {filtered.map((b, i) => (
-              <div key={b.id} className="animate-fade-in-up">
-                <BookingRow
-                  booking={b}
-                  index={i}
-                  providerName={
-                    providerNameById.get(b.providerId) ?? "Provider"
-                  }
-                  hasDispute={disputedBookings.has(b.id)}
-                  onOpen={setSelected}
-                />
-              </div>
+              <BookingRow
+                key={b.id}
+                booking={b}
+                index={i}
+                providerName={providerNameById.get(b.providerId) ?? "Provider"}
+                onOpen={setSelected}
+              />
             ))}
           </div>
         )}
@@ -418,7 +335,7 @@ export function AdminBookings() {
           {selected ? (
             <>
               <DialogHeader>
-                <DialogTitle className="font-display flex items-center gap-2 flex-wrap">
+                <DialogTitle className="font-display flex items-center gap-2">
                   {CATEGORY_SHORT[selected.category]} booking
                   <BookingStatusBadge status={selected.status} />
                 </DialogTitle>
@@ -485,41 +402,6 @@ export function AdminBookings() {
                   Created {formatDate(selected.createdAt)}
                 </p>
 
-                {/* Dispute indicators for this booking */}
-                {selectedDisputes && selectedDisputes.length > 0 ? (
-                  <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                      <Flag className="w-4 h-4 text-destructive" aria-hidden />
-                      <h3 className="font-display font-semibold text-foreground">
-                        Disputes on this booking
-                      </h3>
-                      <span className="ml-auto text-xs font-body text-muted-foreground">
-                        {selectedDisputes.length}{" "}
-                        {selectedDisputes.length === 1 ? "dispute" : "disputes"}
-                      </span>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      {selectedDisputes.map((d, i) => (
-                        <div
-                          key={d.id}
-                          className="rounded-md border border-border bg-card p-3"
-                          data-ocid={`admin_bookings.dispute.${i + 1}`}
-                        >
-                          <div className="flex items-center justify-between gap-2 mb-1">
-                            <span className="font-body text-xs text-muted-foreground">
-                              Dispute #{i + 1}
-                            </span>
-                            <DisputeStatusBadge status={d.status} />
-                          </div>
-                          <p className="text-sm text-foreground font-body line-clamp-2">
-                            {d.reason}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ) : null}
-
                 {/* Message thread for dispute resolution */}
                 <div className="border-t border-border pt-4">
                   <div className="flex items-center gap-2 mb-3">
@@ -546,7 +428,7 @@ export function AdminBookings() {
                         <MessageBubble
                           key={m.id}
                           message={m}
-                          currentPrincipal={identity?.getPrincipal() ?? null}
+                          currentPrincipal={user?.principal ?? null}
                           index={i}
                         />
                       ))}
@@ -565,15 +447,6 @@ export function AdminBookings() {
           key={p.id}
           providerId={p.id}
           onBookings={handleProviderBookings}
-        />
-      ))}
-
-      {/* Hidden per-booking disputes fetchers — one hook per component, no loops */}
-      {allBookings.map((b) => (
-        <BookingDisputesFetcher
-          key={`disputes-${b.id}`}
-          bookingId={b.id}
-          onDisputes={handleBookingDisputes}
         />
       ))}
     </div>

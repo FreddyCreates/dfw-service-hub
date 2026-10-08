@@ -9,88 +9,44 @@
 // browser can load directly.
 
 import type {
-  AISearchResult as BackendAISearchResult,
-  AssistantMessage as BackendAssistantMessage,
   AvailabilitySlot as BackendAvailabilitySlot,
   AvailabilitySlotInput as BackendAvailabilitySlotInput,
   Booking as BackendBooking,
   BookingInput as BackendBookingInput,
-  CommunityReport as BackendCommunityReport,
-  CommunityReportInput as BackendCommunityReportInput,
-  Dispute as BackendDispute,
-  DisputeInput as BackendDisputeInput,
-  DisputeTriage as BackendDisputeTriage,
-  Doc as BackendDoc,
-  DocInput as BackendDocInput,
-  DocStatus as BackendDocStatus,
   MarketplaceRole as BackendMarketplaceRole,
   Message as BackendMessage,
   MessageInput as BackendMessageInput,
-  Microsite as BackendMicrosite,
-  MicrositeInput as BackendMicrositeInput,
   Provider as BackendProvider,
   ProviderInput as BackendProviderInput,
-  ProviderInsights as BackendProviderInsights,
-  ProviderMatch as BackendProviderMatch,
-  Referral as BackendReferral,
-  ReportTargetType as BackendReportTargetType,
   Review as BackendReview,
   ReviewInput as BackendReviewInput,
-  ReviewSummary as BackendReviewSummary,
   SearchFilters as BackendSearchFilters,
   SearchResult as BackendSearchResult,
-  SeedResult as BackendSeedResult,
   ServiceCategory as BackendServiceCategory,
   ServiceListing as BackendServiceListing,
   ServiceListingInput as BackendServiceListingInput,
   SlotStatus as BackendSlotStatus,
-  TrustScore as BackendTrustScore,
   User as BackendUser,
   UserInput as BackendUserInput,
-  Variant_background_insurance_business_identity as BackendVerificationTierKey,
-  VerificationTierStatus as BackendVerificationTierStatus,
-  VerificationTiers as BackendVerificationTiers,
 } from "@/backend";
-import type { SeedResult } from "@/hooks/useBackend";
 import type {
-  AISearchResult,
-  AssistantMessage,
   AvailabilitySlot,
   AvailabilitySlotInput,
   Booking,
   BookingInput,
-  CommunityReport,
-  CommunityReportInput,
-  Dispute,
-  DisputeInput,
-  DisputeTriage,
-  Doc,
-  DocInput,
-  DocStatus,
-  MatchProvidersInput,
   Message,
   MessageInput,
-  Microsite,
-  MicrositeInput,
   Provider,
   ProviderInput,
-  ProviderInsights,
-  ProviderMatch,
-  Referral,
   Review,
   ReviewInput,
-  ReviewSummary,
   SearchFilters,
   SearchResult,
   ServiceListing,
   ServiceListingInput,
   SlotStatus,
-  TrustScore,
   User,
   UserInput,
-  VerificationTierKey,
-  VerificationTierStatus,
-  VerificationTiers,
 } from "@/types";
 import { ExternalBlob } from "@caffeineai/object-storage";
 import type { Principal } from "@icp-sdk/core/principal";
@@ -136,18 +92,9 @@ function logoInputToBlob(
   return logo;
 }
 
-/**
- * Convert an array of photo inputs to an array of ExternalBlob. Each input
- * may be a persistent URL string (existing photo from
- * ExternalBlob.getDirectURL()) or an ExternalBlob produced by
- * ExternalBlob.fromBytes() for a freshly uploaded file. ExternalBlob inputs
- * pass through unchanged so their bytes survive to the backend; URL strings
- * are wrapped via ExternalBlob.fromURL. Mirrors logoInputToBlob.
- */
-function urlsToBlobs(photos: (string | ExternalBlob)[]): ExternalBlob[] {
-  return photos.map((p) =>
-    typeof p === "string" ? ExternalBlob.fromURL(p) : p,
-  );
+/** Convert an array of URL strings to an array of ExternalBlob. */
+function urlsToBlobs(urls: string[]): ExternalBlob[] {
+  return urls.map((u) => ExternalBlob.fromURL(u));
 }
 
 // ─── Backend → Frontend ────────────────────────────────────────────────────
@@ -160,7 +107,6 @@ export function toFrontendUser(user: BackendUser): User {
     email: user.email,
     phone: user.phone,
     avatar: blobToUrl(user.avatar),
-    workPhotos: blobsToUrls(user.workPhotos),
     createdAt: user.createdAt,
     updatedAt: user.updatedAt,
   };
@@ -269,24 +215,6 @@ export function toFrontendSearchResult(
   };
 }
 
-/**
- * Convert the backend SeedResult (bigint providerId, enum outcome) to the
- * frontend-friendly shape (string providerId). The Variant_created_skipped
- * enum values are already "created"/"skipped" and the frontend
- * SeedListingOutcome.outcome is typed as Variant_created_skipped, so the
- * outcome passes through unchanged.
- */
-export function toFrontendSeedResult(result: BackendSeedResult): SeedResult {
-  return {
-    listingOutcomes: result.listingOutcomes.map((o) => ({
-      category: o.category,
-      outcome: o.outcome,
-    })),
-    providerId: id(result.providerId),
-    providerCreated: result.providerCreated,
-  };
-}
-
 // ─── Frontend → Backend (inputs) ───────────────────────────────────────────
 
 export function toBackendUserInput(input: UserInput): BackendUserInput {
@@ -296,7 +224,6 @@ export function toBackendUserInput(input: UserInput): BackendUserInput {
     email: input.email,
     phone: input.phone,
     avatar: urlToBlob(input.avatar),
-    workPhotos: urlsToBlobs(input.workPhotos ?? []),
   };
 }
 
@@ -383,329 +310,3 @@ export function toBackendSearchFilters(
 
 // Re-export the Principal type for callers that need it alongside adapters.
 export type { Principal, SlotStatus };
-
-// ─── V3: Trust & Verification ──────────────────────────────────────────────
-
-export function toFrontendTrustScore(score: BackendTrustScore): TrustScore {
-  return {
-    overall: score.overall,
-    verification: score.verification,
-    reviews: score.reviews,
-    responsiveness: score.responsiveness,
-    longevity: score.longevity,
-    disputeHistory: score.disputeHistory,
-    updatedAt: score.updatedAt,
-  };
-}
-
-export function toFrontendVerificationTiers(
-  tiers: BackendVerificationTiers,
-): VerificationTiers {
-  const map = (t: {
-    status: BackendVerificationTierStatus;
-    note?: string;
-    verifiedAt?: bigint;
-  }) => ({
-    status: t.status as VerificationTierStatus,
-    note: t.note,
-    verifiedAt: t.verifiedAt,
-  });
-  return {
-    background: map(tiers.background),
-    insurance: map(tiers.insurance),
-    business: map(tiers.business),
-    identity: map(tiers.identity),
-  };
-}
-
-export function toBackendVerificationTierKey(
-  key: VerificationTierKey,
-): BackendVerificationTierKey {
-  return key as BackendVerificationTierKey;
-}
-
-export function toBackendVerificationTierStatus(
-  status: VerificationTierStatus,
-): BackendVerificationTierStatus {
-  return status as BackendVerificationTierStatus;
-}
-
-// ─── V3: Disputes ───────────────────────────────────────────────────────────
-
-export function toFrontendDispute(dispute: BackendDispute): Dispute {
-  return {
-    id: id(dispute.id),
-    bookingId: id(dispute.bookingId),
-    openedBy: dispute.openedBy,
-    reason: dispute.reason,
-    status: dispute.status,
-    providerResponse: dispute.providerResponse,
-    adminResolution: dispute.adminResolution,
-    aiTriageSuggestion: dispute.aiTriageSuggestion,
-    createdAt: dispute.createdAt,
-    updatedAt: dispute.updatedAt,
-  };
-}
-
-export function toBackendDisputeInput(
-  input: DisputeInput,
-): BackendDisputeInput {
-  return {
-    bookingId: bid(input.bookingId),
-    reason: input.reason,
-  };
-}
-
-export function toFrontendDisputeTriage(
-  triage: BackendDisputeTriage,
-): DisputeTriage {
-  return {
-    disputeId: id(triage.disputeId),
-    severity: triage.severity,
-    rationale: triage.rationale,
-    suggestedResolution: triage.suggestedResolution,
-  };
-}
-
-// ─── V3: Community Reports ─────────────────────────────────────────────────
-
-export function toFrontendCommunityReport(
-  report: BackendCommunityReport,
-): CommunityReport {
-  return {
-    id: id(report.id),
-    reporter: report.reporter,
-    targetType: report.targetType,
-    targetId: report.targetId,
-    reason: report.reason,
-    status: report.status,
-    resolutionNote: report.resolutionNote,
-    createdAt: report.createdAt,
-    updatedAt: report.updatedAt,
-  };
-}
-
-export function toBackendCommunityReportInput(
-  input: CommunityReportInput,
-): BackendCommunityReportInput {
-  return {
-    targetType: input.targetType as BackendReportTargetType,
-    targetId: input.targetId,
-    reason: input.reason,
-  };
-}
-
-// ─── V3: Rewards & Referrals ───────────────────────────────────────────────
-
-export function toFrontendRewardProfile(profile: {
-  userId: Principal;
-  tier: { toString: () => string };
-  points: bigint;
-  streak: bigint;
-  badges: string[];
-  referralCode: string;
-  updatedAt: bigint;
-}): import("@/types").RewardProfile {
-  return {
-    userId: profile.userId,
-    tier: profile.tier.toString() as import("@/types").RewardTier,
-    points: profile.points,
-    streak: profile.streak,
-    badges: profile.badges,
-    referralCode: profile.referralCode,
-    updatedAt: profile.updatedAt,
-  };
-}
-
-export function toFrontendRewardLedgerEntry(entry: {
-  id: bigint;
-  userId: Principal;
-  points: bigint;
-  reason: string;
-  timestamp: bigint;
-}): import("@/types").RewardLedgerEntry {
-  return {
-    id: id(entry.id),
-    userId: entry.userId,
-    points: entry.points,
-    reason: entry.reason,
-    timestamp: entry.timestamp,
-  };
-}
-
-export function toFrontendReferral(referral: BackendReferral): Referral {
-  return {
-    id: id(referral.id),
-    referrer: referral.referrer,
-    referee: referral.referee,
-    status: referral.status,
-    createdAt: referral.createdAt,
-    awardedAt: referral.awardedAt,
-  };
-}
-
-// ─── V3: Provider Microsites ───────────────────────────────────────────────
-
-function bytesToDataUrl(bytes: Uint8Array | undefined): string | undefined {
-  if (!bytes || bytes.length === 0) return undefined;
-  // Encode as base64 data URL for display. Microsite cover images are stored
-  // as raw bytes on the backend; pages can re-upload via ExternalBlob.
-  try {
-    let binary = "";
-    for (let i = 0; i < bytes.length; i++) {
-      binary += String.fromCharCode(bytes[i]);
-    }
-    return `data:image/jpeg;base64,${btoa(binary)}`;
-  } catch {
-    return undefined;
-  }
-}
-
-function dataUrlToBytes(dataUrl: string | undefined): Uint8Array | undefined {
-  if (!dataUrl) return undefined;
-  // Only convert data URLs; pass other URL forms through as undefined (the
-  // backend expects raw bytes for coverImage).
-  if (!dataUrl.startsWith("data:")) return undefined;
-  try {
-    const base64 = dataUrl.split(",")[1] ?? "";
-    const binary = atob(base64);
-    const bytes = new Uint8Array(binary.length);
-    for (let i = 0; i < binary.length; i++) {
-      bytes[i] = binary.charCodeAt(i);
-    }
-    return bytes;
-  } catch {
-    return undefined;
-  }
-}
-
-export function toFrontendMicrosite(site: BackendMicrosite): Microsite {
-  return {
-    id: id(site.id),
-    providerId: id(site.providerId),
-    slug: site.slug,
-    heroCopy: site.heroCopy,
-    aboutCopy: site.aboutCopy,
-    servicesCopy: site.servicesCopy,
-    blockOrder: site.blockOrder,
-    accentColor: site.accentColor,
-    coverImage: bytesToDataUrl(site.coverImage),
-    published: site.published,
-    generatedAt: site.generatedAt,
-    createdAt: site.createdAt,
-    updatedAt: site.updatedAt,
-  };
-}
-
-export function toBackendMicrositeInput(
-  input: MicrositeInput,
-): BackendMicrositeInput {
-  return {
-    slug: input.slug,
-    heroCopy: input.heroCopy,
-    aboutCopy: input.aboutCopy,
-    servicesCopy: input.servicesCopy,
-    blockOrder: input.blockOrder,
-    accentColor: input.accentColor,
-    coverImage: dataUrlToBytes(input.coverImage),
-    published: input.published,
-  };
-}
-
-// ─── V3: Docs ──────────────────────────────────────────────────────────────
-
-export function toFrontendDoc(doc: BackendDoc): Doc {
-  return {
-    id: id(doc.id),
-    author: doc.author,
-    slug: doc.slug,
-    title: doc.title,
-    content: doc.content,
-    category: doc.category,
-    status: doc.status as DocStatus,
-    readingTime: doc.readingTime,
-    createdAt: doc.createdAt,
-    updatedAt: doc.updatedAt,
-  };
-}
-
-export function toBackendDocInput(input: DocInput): BackendDocInput {
-  return {
-    slug: input.slug,
-    title: input.title,
-    content: input.content,
-    category: input.category,
-    status: input.status as BackendDocStatus,
-  };
-}
-
-// ─── V3: AI Assistant ──────────────────────────────────────────────────────
-
-export function toFrontendAssistantMessage(
-  msg: BackendAssistantMessage,
-): AssistantMessage {
-  return {
-    role: msg.role,
-    content: msg.content,
-    context: msg.context,
-    timestamp: msg.timestamp,
-  };
-}
-
-// ─── V3: AI Provider Matching & Search ─────────────────────────────────────
-
-export function toFrontendProviderMatch(
-  match: BackendProviderMatch,
-): ProviderMatch {
-  return {
-    providerId: id(match.providerId),
-    score: match.score,
-    rationale: match.rationale,
-  };
-}
-
-export function toBackendMatchProvidersInput(input: MatchProvidersInput): {
-  need: string;
-  category?: string;
-  serviceArea?: string;
-} {
-  return {
-    need: input.need,
-    category: input.category,
-    serviceArea: input.serviceArea,
-  };
-}
-
-export function toFrontendAISearchResult(
-  result: BackendAISearchResult,
-): AISearchResult {
-  return {
-    listingId: id(result.listingId),
-    providerId: id(result.providerId),
-    score: result.score,
-    rationale: result.rationale,
-  };
-}
-
-// ─── V3: AI Review Summary & Provider Insights ─────────────────────────────
-
-export function toFrontendReviewSummary(
-  summary: BackendReviewSummary,
-): ReviewSummary {
-  return {
-    providerId: id(summary.providerId),
-    summary: summary.summary,
-    sentiment: summary.sentiment,
-    themes: summary.themes,
-  };
-}
-
-export function toFrontendProviderInsights(
-  insights: BackendProviderInsights,
-): ProviderInsights {
-  return {
-    providerId: id(insights.providerId),
-    insights: insights.insights,
-    recommendations: insights.recommendations,
-  };
-}

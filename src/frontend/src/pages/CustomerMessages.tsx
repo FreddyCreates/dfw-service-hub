@@ -2,11 +2,10 @@
 // Lists booking threads from useListMyBookings with unread indicators.
 // Clicking a thread opens the message view (useGetThread) with a send form
 // (useSendMessage) and marks the thread read (useMarkThreadRead) on open.
-// V3 polish: skeleton loading, motion, improved message UI.
 
 import { EmptyState } from "@/components/EmptyState";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { MessageBubble } from "@/components/MessageBubble";
-import { Skeleton, SkeletonText } from "@/components/Skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,19 +17,10 @@ import {
   useListMyBookings,
   useMarkThreadRead,
   useSendMessage,
-  useSuggestReply,
   useUnreadMessageCount,
 } from "@/hooks/useQueries";
-import { type Booking, CATEGORY_LABELS, type Message } from "@/types";
-import { useInternetIdentity } from "@caffeineai/core-infrastructure";
-import {
-  ArrowLeft,
-  CalendarDays,
-  Loader2,
-  MessageSquare,
-  Send,
-  Wand2,
-} from "lucide-react";
+import { type Booking, CATEGORY_LABELS } from "@/types";
+import { ArrowLeft, CalendarDays, MessageSquare, Send } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
@@ -42,25 +32,6 @@ function formatDate(date: string): string {
     month: "short",
     day: "numeric",
   });
-}
-
-// Build a compact conversation transcript for the AI reply suggestion.
-// Labels each line as Customer/Provider based on the sender principal so the
-// model understands who said what. Caps at the most recent 12 messages.
-function buildConversationContext(
-  messages: Message[] | undefined,
-  myPrincipal: string | null,
-): string {
-  if (!messages || messages.length === 0) return "";
-  const recent = messages.slice(-12);
-  const lines = recent.map((msg) => {
-    const sender =
-      myPrincipal && msg.sender.toString() === myPrincipal
-        ? "Customer"
-        : "Provider";
-    return `${sender}: ${msg.content}`;
-  });
-  return lines.join("\n");
 }
 
 // Inbox list row — resolves provider name + unread count for one booking.
@@ -101,7 +72,7 @@ function ThreadRow({
         </div>
         {unreadCount > 0 ? (
           <span
-            className="shrink-0 inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-accent text-accent-foreground text-xs font-body font-semibold animate-badge-pop"
+            className="shrink-0 inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-accent text-accent-foreground text-xs font-body font-semibold"
             aria-label={`${unreadCount} unread`}
             data-ocid={`customer_messages.unread.${index + 1}`}
           >
@@ -113,63 +84,6 @@ function ThreadRow({
   );
 }
 
-// Skeleton row for the inbox list — matches ThreadRow layout.
-function ThreadRowSkeleton({ index }: { index: number }) {
-  return (
-    <div
-      className="p-4 border-b border-border"
-      data-ocid={`customer_messages.thread_skeleton.${index + 1}`}
-      aria-hidden
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex-1 space-y-2">
-          <Skeleton className="h-4 w-1/2" />
-          <Skeleton className="h-3 w-2/3" />
-        </div>
-        <Skeleton circle className="w-5 h-5" />
-      </div>
-    </div>
-  );
-}
-
-// Skeleton for the thread view — message bubbles + send form.
-function ThreadViewSkeleton() {
-  return (
-    <Card
-      className="py-0 flex flex-col h-full"
-      data-ocid="customer_messages.thread_view_skeleton"
-    >
-      <CardHeader className="border-b border-border pb-3">
-        <div className="flex items-center gap-3">
-          <Skeleton circle className="w-9 h-9" />
-          <div className="flex-1 space-y-2">
-            <Skeleton className="h-4 w-1/3" />
-            <Skeleton className="h-3 w-1/2" />
-          </div>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-1 flex flex-col p-0 min-h-0">
-        <div className="flex-1 p-4 flex flex-col gap-3">
-          <div className="flex justify-start">
-            <Skeleton className="h-12 w-2/3 rounded-2xl rounded-bl-md" />
-          </div>
-          <div className="flex justify-end">
-            <Skeleton className="h-12 w-1/2 rounded-2xl rounded-br-md" />
-          </div>
-          <div className="flex justify-start">
-            <Skeleton className="h-16 w-3/4 rounded-2xl rounded-bl-md" />
-          </div>
-        </div>
-        <div className="border-t border-border p-3 flex items-center gap-2">
-          <Skeleton className="h-9 flex-1" />
-          <Skeleton className="h-9 w-9 rounded-md" />
-          <Skeleton className="h-9 w-9 rounded-md" />
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
 // Thread view — message list + send form for a single booking.
 function ThreadView({
   booking,
@@ -178,37 +92,13 @@ function ThreadView({
   booking: Booking;
   onBack: () => void;
 }) {
-  const { identity } = useInternetIdentity();
+  const { user } = useAuth();
   const { data: provider } = useGetProvider(booking.providerId);
   const { data: messages, isLoading } = useGetThread(booking.id);
   const sendMessage = useSendMessage();
-  const suggestReply = useSuggestReply();
   const markThreadRead = useMarkThreadRead();
   const [draft, setDraft] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  const myPrincipal = identity?.getPrincipal().toString() ?? null;
-  const hasMessages = !!messages && messages.length > 0;
-  const isSuggesting = suggestReply.isPending;
-
-  const handleSuggestReply = () => {
-    const context = buildConversationContext(messages, myPrincipal);
-    if (!context) return;
-    suggestReply.mutate(
-      { bookingId: booking.id, conversationContext: context },
-      {
-        onSuccess: (reply) => {
-          setDraft(reply);
-        },
-        onError: (err) =>
-          toast.error(
-            err instanceof Error
-              ? err.message
-              : "Could not generate a reply. Please try again.",
-          ),
-      },
-    );
-  };
 
   // Mark the thread read when opened.
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional fire-on-open
@@ -243,7 +133,7 @@ function ThreadView({
 
   return (
     <Card
-      className="py-0 flex flex-col h-full animate-fade-in-up shadow-subtle"
+      className="py-0 flex flex-col h-full"
       data-ocid="customer_messages.thread_view"
     >
       <CardHeader className="border-b border-border pb-3">
@@ -274,42 +164,19 @@ function ThreadView({
         <ScrollArea className="flex-1" data-ocid="customer_messages.scroll">
           <div ref={scrollRef} className="p-4 flex flex-col gap-3 min-h-full">
             {isLoading ? (
-              <div className="flex flex-col gap-3" aria-hidden>
-                <div className="flex justify-start">
-                  <Skeleton className="h-12 w-2/3 rounded-2xl rounded-bl-md" />
-                </div>
-                <div className="flex justify-end">
-                  <Skeleton className="h-12 w-1/2 rounded-2xl rounded-br-md" />
-                </div>
-                <div className="flex justify-start">
-                  <Skeleton className="h-16 w-3/4 rounded-2xl rounded-bl-md" />
-                </div>
-              </div>
+              <LoadingSpinner label="Loading messages" />
             ) : !messages || messages.length === 0 ? (
-              <div className="flex flex-col items-center justify-center text-center py-10 px-4">
-                <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mb-3">
-                  <MessageSquare
-                    className="w-6 h-6 text-muted-foreground"
-                    aria-hidden
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground font-body">
-                  No messages yet. Say hello to your provider.
-                </p>
-              </div>
+              <p className="text-sm text-muted-foreground font-body text-center py-8">
+                No messages yet. Say hello to your provider.
+              </p>
             ) : (
               messages.map((msg, i) => (
-                <div
+                <MessageBubble
                   key={msg.id}
-                  className="animate-fade-in-up"
-                  style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
-                >
-                  <MessageBubble
-                    message={msg}
-                    currentPrincipal={identity?.getPrincipal() ?? null}
-                    index={i}
-                  />
-                </div>
+                  message={msg}
+                  currentPrincipal={user?.principal ?? null}
+                  index={i}
+                />
               ))
             )}
           </div>
@@ -329,34 +196,13 @@ function ThreadView({
             data-ocid="customer_messages.send_input"
           />
           <Button
-            type="button"
-            variant="outline"
-            size="icon"
-            onClick={handleSuggestReply}
-            disabled={isSuggesting || !hasMessages}
-            aria-label="Suggest reply with AI"
-            title="Suggest reply with AI"
-            data-ocid="customer_messages.suggest_reply_button"
-            className="shrink-0 text-accent-foreground border-accent/40 hover:bg-accent/10 hover:text-accent-foreground"
-          >
-            {isSuggesting ? (
-              <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-            ) : (
-              <Wand2 className="w-4 h-4" aria-hidden />
-            )}
-          </Button>
-          <Button
             type="submit"
             size="icon"
             disabled={sendMessage.isPending || !draft.trim()}
             aria-label="Send message"
             data-ocid="customer_messages.send_button"
           >
-            {sendMessage.isPending ? (
-              <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-            ) : (
-              <Send className="w-4 h-4" aria-hidden />
-            )}
+            <Send className="w-4 h-4" aria-hidden />
           </Button>
         </form>
       </CardContent>
@@ -397,7 +243,10 @@ export function CustomerMessages() {
           title="Sign in to view messages"
           description="Message your providers about bookings, timing, and job details."
           action={
-            <Button onClick={login} data-ocid="customer_messages.signin">
+            <Button
+              onClick={() => login()}
+              data-ocid="customer_messages.signin"
+            >
               Sign in
             </Button>
           }
@@ -408,11 +257,11 @@ export function CustomerMessages() {
 
   return (
     <div
-      className="bg-background min-h-screen animate-page-transition"
+      className="bg-background min-h-screen"
       data-ocid="page.customer_messages"
     >
       <section
-        className="bg-card border-b border-border shadow-subtle"
+        className="bg-card border-b border-border"
         data-ocid="customer_messages.header"
       >
         <div className="container mx-auto px-4 lg:px-6 py-8">
@@ -430,31 +279,7 @@ export function CustomerMessages() {
         data-ocid="customer_messages.inbox"
       >
         {isLoading ? (
-          <div
-            className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-16rem)] min-h-[28rem]"
-            data-ocid="customer_messages.loading_state"
-          >
-            <Card
-              className="py-0 flex flex-col overflow-hidden"
-              data-ocid="customer_messages.list_skeleton"
-            >
-              <CardHeader className="border-b border-border py-3">
-                <Skeleton className="h-4 w-1/3" />
-              </CardHeader>
-              <CardContent className="p-0 flex-1 overflow-y-auto">
-                {Array.from({ length: 4 }).map((_, i) => (
-                  <ThreadRowSkeleton
-                    // biome-ignore lint/suspicious/noArrayIndexKey: skeleton thread rows have no stable identity; index is the only available key.
-                    key={i}
-                    index={i}
-                  />
-                ))}
-              </CardContent>
-            </Card>
-            <div className="md:col-span-2 h-full">
-              <ThreadViewSkeleton />
-            </div>
-          </div>
+          <LoadingSpinner label="Loading conversations" />
         ) : sortedBookings.length === 0 ? (
           <EmptyState
             icon={MessageSquare}
@@ -475,7 +300,7 @@ export function CustomerMessages() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 h-[calc(100vh-16rem)] min-h-[28rem]">
             {/* Inbox list */}
             <Card
-              className={`py-0 flex flex-col overflow-hidden shadow-subtle ${
+              className={`py-0 flex flex-col overflow-hidden ${
                 selectedBooking ? "hidden md:flex" : "flex"
               }`}
               data-ocid="customer_messages.list"
@@ -507,16 +332,14 @@ export function CustomerMessages() {
                 />
               ) : (
                 <Card
-                  className="py-0 h-full flex items-center justify-center shadow-subtle"
+                  className="py-0 h-full flex items-center justify-center"
                   data-ocid="customer_messages.no_thread"
                 >
                   <CardContent className="p-8 text-center">
-                    <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center mx-auto mb-3">
-                      <MessageSquare
-                        className="w-7 h-7 text-muted-foreground"
-                        aria-hidden
-                      />
-                    </div>
+                    <MessageSquare
+                      className="w-10 h-10 text-muted-foreground/50 mx-auto mb-3"
+                      aria-hidden
+                    />
                     <p className="text-sm text-muted-foreground font-body">
                       Select a conversation to view messages.
                     </p>

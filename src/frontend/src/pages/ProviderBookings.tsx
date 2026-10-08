@@ -4,19 +4,10 @@
 
 import { BookingStatusBadge } from "@/components/BookingStatusBadge";
 import { EmptyState } from "@/components/EmptyState";
-import { SkeletonList } from "@/components/Skeleton";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useAcceptBooking,
@@ -89,84 +80,6 @@ function principalShort(principal: string): string {
   return `${principal.slice(0, 6)}…${principal.slice(-4)}`;
 }
 
-// ─── SLA indicators ────────────────────────────────────────────────────────
-// Compute response-time and on-time SLA badges from booking timestamps.
-// Response time = how quickly the provider acted on a request (accepted or
-// declined). On-time = whether an in-progress/completed job started on or
-// before its scheduled start time.
-
-const RESPONSE_SLA_MS = 4 * 60 * 60 * 1000; // 4 hours to respond
-const ON_TIME_SLA_MS = 15 * 60 * 1000; // 15-minute grace window
-
-type SlaTone = "success" | "warning" | "danger";
-
-interface SlaIndicator {
-  label: string;
-  tone: SlaTone;
-  detail: string;
-}
-
-function responseTimeSla(booking: Booking): SlaIndicator | null {
-  // Only meaningful for bookings that were requested then acted on.
-  if (booking.status === "requested" || booking.status === "cancelled") {
-    return null;
-  }
-  const created = Number(booking.createdAt);
-  const updated = Number(booking.updatedAt);
-  if (!created || !updated || updated < created) return null;
-  const elapsed = updated - created;
-  const elapsedMin = Math.round(elapsed / 60000);
-  const detail =
-    elapsedMin >= 60
-      ? `${Math.round(elapsedMin / 60)}h response`
-      : `${elapsedMin}m response`;
-  if (elapsed <= RESPONSE_SLA_MS) {
-    return { label: "Fast response", tone: "success", detail };
-  }
-  if (elapsed <= RESPONSE_SLA_MS * 3) {
-    return { label: "Slow response", tone: "warning", detail };
-  }
-  return { label: "Overdue response", tone: "danger", detail };
-}
-
-function onTimeSla(booking: Booking): SlaIndicator | null {
-  // Only meaningful once the job has started or completed.
-  if (
-    booking.status !== "inProgress" &&
-    booking.status !== "completed" &&
-    booking.status !== "reviewed"
-  ) {
-    return null;
-  }
-  if (!booking.scheduledDate || !booking.scheduledTime) return null;
-  const scheduled = new Date(
-    `${booking.scheduledDate}T${booking.scheduledTime}`,
-  );
-  if (Number.isNaN(scheduled.getTime())) return null;
-  const updated = Number(booking.updatedAt);
-  if (!updated) return null;
-  const startedOrUpdated = new Date(updated);
-  const diffMs = startedOrUpdated.getTime() - scheduled.getTime();
-  if (diffMs <= ON_TIME_SLA_MS) {
-    return { label: "On time", tone: "success", detail: "Started on schedule" };
-  }
-  const lateMin = Math.round(diffMs / 60000);
-  const detail =
-    lateMin >= 60
-      ? `${Math.round(lateMin / 60)}h late start`
-      : `${lateMin}m late start`;
-  if (diffMs <= ON_TIME_SLA_MS * 4) {
-    return { label: "Slightly late", tone: "warning", detail };
-  }
-  return { label: "Late start", tone: "danger", detail };
-}
-
-const SLA_TONE_CLASSES: Record<SlaTone, string> = {
-  success: "bg-success/10 text-success-foreground ring-success/20",
-  warning: "bg-warning/10 text-warning-foreground ring-warning/20",
-  danger: "bg-destructive/10 text-destructive ring-destructive/20",
-};
-
 interface BookingRowProps {
   booking: Booking;
   index: number;
@@ -183,10 +96,6 @@ function BookingRow({ booking, index }: BookingRowProps) {
   const canStart =
     booking.status === "accepted" || booking.status === "scheduled";
   const canComplete = booking.status === "inProgress";
-
-  // SLA indicators for this booking (response time + on-time start).
-  const responseSla = responseTimeSla(booking);
-  const onTime = onTimeSla(booking);
 
   const handleAccept = () => {
     acceptBooking.mutate(booking.id, {
@@ -235,10 +144,7 @@ function BookingRow({ booking, index }: BookingRowProps) {
     completeBooking.isPending;
 
   return (
-    <Card
-      className="py-0 animate-fade-in-up animate-card-hover-lift"
-      data-ocid={`provider_bookings.item.${index + 1}`}
-    >
+    <Card className="py-0" data-ocid={`provider_bookings.item.${index + 1}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -271,29 +177,6 @@ function BookingRow({ booking, index }: BookingRowProps) {
             <span className="text-foreground truncate">{booking.address}</span>
           </div>
         </div>
-
-        {responseSla || onTime ? (
-          <div className="flex flex-wrap items-center gap-2">
-            {responseSla ? (
-              <span
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-body font-medium ring-1 ${SLA_TONE_CLASSES[responseSla.tone]}`}
-                title={responseSla.detail}
-              >
-                <Clock className="w-3 h-3" aria-hidden />
-                {responseSla.label}
-              </span>
-            ) : null}
-            {onTime ? (
-              <span
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-body font-medium ring-1 ${SLA_TONE_CLASSES[onTime.tone]}`}
-                title={onTime.detail}
-              >
-                <Clock className="w-3 h-3" aria-hidden />
-                {onTime.label}
-              </span>
-            ) : null}
-          </div>
-        ) : null}
 
         {booking.jobDetails ? (
           <div className="rounded-lg border border-border bg-secondary/40 p-3">
@@ -415,10 +298,7 @@ export function ProviderBookings() {
         className="container mx-auto px-4 lg:px-6 py-16"
         data-ocid="page.provider_bookings"
       >
-        <SkeletonList
-          count={3}
-          className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-        />
+        <LoadingSpinner fullPage label="Loading bookings" />
       </div>
     );
   }
@@ -432,7 +312,7 @@ export function ProviderBookings() {
         <EmptyState
           icon={AlertCircle}
           title="Sign in to view bookings"
-          description="You need to sign in with Internet Identity to manage incoming booking requests."
+          description="You need to sign in to manage incoming booking requests."
           data-ocid="provider_bookings.signin_required"
         />
       </div>
@@ -518,10 +398,7 @@ export function ProviderBookings() {
         </Tabs>
 
         {bookingsLoading ? (
-          <SkeletonList
-            count={3}
-            className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-          />
+          <LoadingSpinner label="Loading bookings" />
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={Package}

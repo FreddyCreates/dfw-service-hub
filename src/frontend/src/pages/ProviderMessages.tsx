@@ -2,16 +2,15 @@
 // Lists booking threads from useListProviderBookings(providerId) with unread
 // indicators via useUnreadMessageCount. Click to open thread view with
 // MessageBubble via useGetThread, send form via useSendMessage, mark read
-// via useMarkThreadRead. Uses identity?.getPrincipal() ?? null for MessageBubble.
+// via useMarkThreadRead. Uses user?.principal ?? null from useAuth() for MessageBubble.
 
 import { EmptyState } from "@/components/EmptyState";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { MessageBubble } from "@/components/MessageBubble";
-import { SkeletonCard, SkeletonList } from "@/components/Skeleton";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useGetMyProvider,
@@ -20,22 +19,17 @@ import {
   useListProviderBookings,
   useMarkThreadRead,
   useSendMessage,
-  useSuggestReply,
   useUnreadMessageCount,
 } from "@/hooks/useQueries";
-import { type Booking, CATEGORY_LABELS, type Message } from "@/types";
-import { useInternetIdentity } from "@caffeineai/core-infrastructure";
+import { type Booking, CATEGORY_LABELS } from "@/types";
 import { Link } from "@tanstack/react-router";
 import {
   AlertCircle,
   ArrowLeft,
   CalendarDays,
-  Loader2,
   MessageSquare,
   Send,
-  Sparkles,
   Truck,
-  Wand2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -56,25 +50,6 @@ function principalShort(principal: string): string {
   return `${principal.slice(0, 6)}…${principal.slice(-4)}`;
 }
 
-// Build a compact conversation transcript for the AI reply suggestion.
-// Labels each line as Customer/Provider based on the sender principal so the
-// model understands who said what. Caps at the most recent 12 messages.
-function buildConversationContext(
-  messages: Message[] | undefined,
-  myPrincipal: string | null,
-): string {
-  if (!messages || messages.length === 0) return "";
-  const recent = messages.slice(-12);
-  const lines = recent.map((msg) => {
-    const sender =
-      myPrincipal && msg.sender.toString() === myPrincipal
-        ? "Provider"
-        : "Customer";
-    return `${sender}: ${msg.content}`;
-  });
-  return lines.join("\n");
-}
-
 interface ThreadRowProps {
   booking: Booking;
   index: number;
@@ -93,7 +68,7 @@ function ThreadRow({ booking, index, active, onSelect }: ThreadRowProps) {
     <button
       type="button"
       onClick={() => onSelect(booking)}
-      className={`w-full text-left p-4 border-b border-border transition-smooth animate-fade-in-up focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
+      className={`w-full text-left p-4 border-b border-border transition-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring ${
         active ? "bg-primary/10" : "hover:bg-secondary"
       }`}
       data-ocid={`provider_messages.thread.${index + 1}`}
@@ -129,54 +104,16 @@ interface ThreadViewProps {
 }
 
 function ThreadView({ booking, onBack }: ThreadViewProps) {
-  const { identity } = useInternetIdentity();
+  const { user } = useAuth();
   const { data: customer } = useGetUser(booking.customerId);
   const { data: messages, isLoading } = useGetThread(booking.id);
   const sendMessage = useSendMessage();
-  const suggestReply = useSuggestReply();
   const markThreadRead = useMarkThreadRead();
   const [draft, setDraft] = useState("");
-  const [suggestedReply, setSuggestedReply] = useState("");
-  const [showSuggestion, setShowSuggestion] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const customerName =
     customer?.displayName ?? principalShort(booking.customerId.toString());
-
-  const myPrincipal = identity?.getPrincipal().toString() ?? null;
-  const hasMessages = !!messages && messages.length > 0;
-  const isSuggesting = suggestReply.isPending;
-
-  const handleSuggestReply = () => {
-    const context = buildConversationContext(messages, myPrincipal);
-    if (!context) return;
-    suggestReply.mutate(
-      { bookingId: booking.id, conversationContext: context },
-      {
-        onSuccess: (reply) => {
-          setSuggestedReply(reply);
-          setShowSuggestion(true);
-        },
-        onError: (err) =>
-          toast.error(
-            err instanceof Error
-              ? err.message
-              : "Could not generate a reply. Please try again.",
-          ),
-      },
-    );
-  };
-
-  const handleUseSuggestion = () => {
-    setDraft(suggestedReply);
-    setShowSuggestion(false);
-    setSuggestedReply("");
-  };
-
-  const handleDiscardSuggestion = () => {
-    setShowSuggestion(false);
-    setSuggestedReply("");
-  };
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional fire-on-open
   useEffect(() => {
@@ -240,9 +177,7 @@ function ThreadView({ booking, onBack }: ThreadViewProps) {
         <ScrollArea className="flex-1" data-ocid="provider_messages.scroll">
           <div ref={scrollRef} className="p-4 flex flex-col gap-3 min-h-full">
             {isLoading ? (
-              <div className="p-4">
-                <SkeletonCard withMedia={false} />
-              </div>
+              <LoadingSpinner label="Loading messages" />
             ) : !messages || messages.length === 0 ? (
               <p className="text-sm text-muted-foreground font-body text-center py-8">
                 No messages yet. Reach out to your customer about this booking.
@@ -252,7 +187,7 @@ function ThreadView({ booking, onBack }: ThreadViewProps) {
                 <MessageBubble
                   key={msg.id}
                   message={msg}
-                  currentPrincipal={identity?.getPrincipal() ?? null}
+                  currentPrincipal={user?.principal ?? null}
                   index={i}
                 />
               ))
@@ -260,95 +195,28 @@ function ThreadView({ booking, onBack }: ThreadViewProps) {
           </div>
         </ScrollArea>
 
-        {showSuggestion ? (
-          <div
-            className="border-t border-border p-3 flex flex-col gap-2 bg-accent/5"
-            data-ocid="provider_messages.suggestion_preview"
-          >
-            <div className="flex items-center justify-between gap-2">
-              <span
-                className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-body font-semibold uppercase tracking-wide text-accent-foreground ring-1 ring-accent/30"
-                data-ocid="provider_messages.suggestion_badge"
-              >
-                <Sparkles className="w-2.5 h-2.5" aria-hidden />
-                AI-generated
-              </span>
-              <span className="text-[11px] text-muted-foreground font-body">
-                Edit before sending
-              </span>
-            </div>
-            <Textarea
-              value={suggestedReply}
-              onChange={(e) => setSuggestedReply(e.target.value)}
-              rows={4}
-              aria-label="AI suggested reply"
-              data-ocid="provider_messages.suggestion_input"
-              className="bg-background"
-            />
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleUseSuggestion}
-                disabled={!suggestedReply.trim()}
-                data-ocid="provider_messages.use_suggestion"
-              >
-                <Send className="w-3.5 h-3.5" aria-hidden />
-                Use in composer
-              </Button>
-              <Button
-                type="button"
-                size="sm"
-                variant="outline"
-                onClick={handleDiscardSuggestion}
-                data-ocid="provider_messages.discard_suggestion"
-              >
-                Discard
-              </Button>
-            </div>
-          </div>
-        ) : null}
-
         <form
           onSubmit={handleSend}
-          className="border-t border-border p-3 flex flex-col gap-2"
+          className="border-t border-border p-3 flex items-center gap-2"
           data-ocid="provider_messages.send_form"
         >
-          <div className="flex items-center gap-2">
-            <Input
-              type="text"
-              placeholder="Type a message…"
-              value={draft}
-              onChange={(e) => setDraft(e.target.value)}
-              aria-label="Message"
-              data-ocid="provider_messages.send_input"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleSuggestReply}
-              disabled={isSuggesting || !hasMessages}
-              data-ocid="provider_messages.suggest_reply_button"
-              className="shrink-0 border-accent/40 text-accent-foreground hover:bg-accent/10 hover:text-accent-foreground"
-            >
-              {isSuggesting ? (
-                <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-              ) : (
-                <Wand2 className="w-4 h-4" aria-hidden />
-              )}
-              <span className="hidden sm:inline">AI Suggest Reply</span>
-              <span className="sm:hidden">AI</span>
-            </Button>
-            <Button
-              type="submit"
-              size="icon"
-              disabled={sendMessage.isPending || !draft.trim()}
-              aria-label="Send message"
-              data-ocid="provider_messages.send_button"
-            >
-              <Send className="w-4 h-4" aria-hidden />
-            </Button>
-          </div>
+          <Input
+            type="text"
+            placeholder="Type a message…"
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            aria-label="Message"
+            data-ocid="provider_messages.send_input"
+          />
+          <Button
+            type="submit"
+            size="icon"
+            disabled={sendMessage.isPending || !draft.trim()}
+            aria-label="Send message"
+            data-ocid="provider_messages.send_button"
+          >
+            <Send className="w-4 h-4" aria-hidden />
+          </Button>
         </form>
       </CardContent>
     </Card>
@@ -380,7 +248,7 @@ export function ProviderMessages() {
         className="container mx-auto px-4 lg:px-6 py-16"
         data-ocid="page.provider_messages"
       >
-        <SkeletonList count={4} className="grid-cols-1" />
+        <LoadingSpinner fullPage label="Loading messages" />
       </div>
     );
   }
@@ -394,7 +262,7 @@ export function ProviderMessages() {
         <EmptyState
           icon={AlertCircle}
           title="Sign in to view messages"
-          description="You need to sign in with Internet Identity to message customers about bookings."
+          description="Sign in to message customers about their bookings."
           data-ocid="provider_messages.signin_required"
         />
       </div>
@@ -449,7 +317,7 @@ export function ProviderMessages() {
         data-ocid="provider_messages.inbox"
       >
         {bookingsLoading ? (
-          <SkeletonList count={4} className="grid-cols-1 md:grid-cols-3" />
+          <LoadingSpinner label="Loading conversations" />
         ) : sortedBookings.length === 0 ? (
           <EmptyState
             icon={MessageSquare}

@@ -19,14 +19,10 @@ import Map "mo:core/Map";
 import Nat "mo:core/Nat";
 import Principal "mo:core/Principal";
 import Runtime "mo:core/Runtime";
-import Storage "mo:caffeineai-object-storage/Storage";
 import Text "mo:core/Text";
 import Types "../types/marketplace-core";
 import Lib "../lib/marketplace-core";
 import OpenAI "../lib/openai";
-import Email "../lib/email";
-import V3Lib "../lib/v3-contracts";
-import V3Types "../types/v3-contracts";
 
 mixin (
   accessControlState : AccessControl.AccessControlState,
@@ -44,14 +40,6 @@ mixin (
   nextMessageId : { var value : Nat },
   nextSlotId : { var value : Nat },
   openAIApiKey : { var value : ?Text },
-  emailNotificationsEnabled : { var value : Bool },
-  // Rewards state threaded in so the marketplace lifecycle methods can award
-  // points, increment/reset streaks, and award referrals as side-effects.
-  rewards : Map.Map<V3Types.UserId, V3Types.RewardProfile>,
-  rewardLedger : Map.Map<Nat, V3Types.RewardLedgerEntry>,
-  referrals : Map.Map<Nat, V3Types.Referral>,
-  nextRewardLedgerId : { var value : Nat },
-  nextReferralId : { var value : Nat },
 ) {
   // ---- Auth helpers ----
   func requireSignedIn(caller : Principal) {
@@ -238,26 +226,7 @@ mixin (
     if (not Lib.checkAvailability(slots, listing.providerId, input.scheduledDate, input.scheduledTime)) {
       Runtime.trap("The selected time slot is not available. Please choose an available time from the provider calendar.");
     };
-    let booking = Lib.createBookingWithCategory(bookings, nextBookingId, caller, listing.providerId, listing.id, listing.category, input);
-    // Email side-effect: notify the provider of the new booking request.
-    // Resolves the provider owner principal for the recipient lookup. Never
-    // blocks the transition on email failure.
-    let provider = switch (Lib.getProvider(providers, listing.providerId)) {
-      case (?p) p;
-      case null return booking;
-    };
-    let customer = switch (Lib.getUser(users, caller)) {
-      case (?u) u;
-      case null return booking;
-    };
-    await Email.notifyProviderNewBooking(
-      emailNotificationsEnabled.value,
-      users,
-      provider.ownerPrincipal,
-      customer,
-      booking,
-    );
-    booking;
+    Lib.createBookingWithCategory(bookings, nextBookingId, caller, listing.providerId, listing.id, listing.category, input);
   };
 
   // Only the provider on the booking can accept it.
@@ -270,15 +239,7 @@ mixin (
     if (booking.providerId != provider.id) {
       Runtime.trap("Unauthorized: not the provider on this booking");
     };
-    let updated = Lib.transitionBooking(bookings, bookingId, #accepted);
-    // Email side-effect: notify the customer that the booking was accepted.
-    await Email.notifyCustomerBookingAccepted(
-      emailNotificationsEnabled.value,
-      users,
-      booking.customerId,
-      updated,
-    );
-    updated;
+    Lib.transitionBooking(bookings, bookingId, #accepted);
   };
 
   // Decline == cancel by the provider (requested -> cancelled).
@@ -307,14 +268,7 @@ mixin (
     if (not Lib.bookingStatusEquals(booking.status, #requested)) {
       Runtime.trap("Can only cancel a booking before it is accepted");
     };
-    let updated = Lib.transitionBooking(bookings, bookingId, #cancelled);
-    // Rewards side-effect: reset the customer's streak with freeze protection
-    // (a streak of 0 is left untouched). Wrapped in try/catch so a rewards
-    // failure never breaks the primary cancellation.
-    try {
-      V3Lib.resetStreak(rewards, booking.customerId);
-    } catch _ {};
-    updated;
+    Lib.transitionBooking(bookings, bookingId, #cancelled);
   };
 
   // Provider schedules an accepted booking.
@@ -327,15 +281,7 @@ mixin (
     if (booking.providerId != provider.id) {
       Runtime.trap("Unauthorized: not the provider on this booking");
     };
-    let updated = Lib.transitionBooking(bookings, bookingId, #scheduled);
-    // Email side-effect: notify the customer that the booking is scheduled.
-    await Email.notifyCustomerBookingScheduled(
-      emailNotificationsEnabled.value,
-      users,
-      booking.customerId,
-      updated,
-    );
-    updated;
+    Lib.transitionBooking(bookings, bookingId, #scheduled);
   };
 
   // Provider marks a scheduled booking as in-progress.
@@ -361,47 +307,7 @@ mixin (
     if (booking.providerId != provider.id) {
       Runtime.trap("Unauthorized: not the provider on this booking");
     };
-    let updated = Lib.transitionBooking(bookings, bookingId, #completed);
-    // Email side-effect: notify the customer that the booking is complete.
-    await Email.notifyCustomerBookingCompleted(
-      emailNotificationsEnabled.value,
-      users,
-      booking.customerId,
-      updated,
-    );
-    // Rewards side-effects: award booking-completion points, increment the
-    // customer's streak, and check/award any pending referral bonus. Each is
-    // wrapped in try/catch so a rewards failure never breaks the primary
-    // operation (the booking is already marked completed).
-    try {
-      ignore V3Lib.awardPoints(
-        rewards,
-        rewardLedger,
-        nextRewardLedgerId,
-        bookings,
-        reviews,
-        referrals,
-        booking.customerId,
-        100,
-        "booking_completed",
-      );
-    } catch _ {};
-    try {
-      V3Lib.incrementStreak(rewards, booking.customerId);
-    } catch _ {};
-    try {
-      ignore V3Lib.awardReferralOnFirstBooking(
-        rewards,
-        rewardLedger,
-        nextRewardLedgerId,
-        referrals,
-        nextReferralId,
-        bookings,
-        reviews,
-        booking.customerId,
-      );
-    } catch _ {};
-    updated;
+    Lib.transitionBooking(bookings, bookingId, #completed);
   };
 
   public query ({ caller }) func listMyBookings() : async [Types.Booking] {
@@ -465,21 +371,6 @@ mixin (
     Lib.applyReviewToProviderRating(providers, booking.providerId, input.rating);
     // Transition the booking to #reviewed.
     ignore Lib.transitionBooking(bookings, input.bookingId, #reviewed);
-    // Rewards side-effect: award review points to the reviewer. Wrapped in
-    // try/catch so a rewards failure never breaks the primary review creation.
-    try {
-      ignore V3Lib.awardPoints(
-        rewards,
-        rewardLedger,
-        nextRewardLedgerId,
-        bookings,
-        reviews,
-        referrals,
-        caller,
-        20,
-        "review_written",
-      );
-    } catch _ {};
     review;
   };
 
@@ -545,22 +436,7 @@ mixin (
     if (booking.customerId != caller and not isProvider) {
       Runtime.trap("Unauthorized: not a participant on this booking");
     };
-    let message = Lib.sendMessage(messages, nextMessageId, input.bookingId, caller, input);
-    // Email side-effect: notify the non-sender participant of the new message.
-    // If the sender is the provider, the customer is notified (and vice versa).
-    // Only the customer-notification path is required by the spec; the
-    // provider-notification path is included for symmetry but uses the same
-    // customer-notification helper only when the sender is the provider.
-    if (isProvider) {
-      await Email.notifyCustomerNewMessage(
-        emailNotificationsEnabled.value,
-        users,
-        booking.customerId,
-        booking,
-        message.content,
-      );
-    };
-    message;
+    Lib.sendMessage(messages, nextMessageId, input.bookingId, caller, input);
   };
 
   public shared ({ caller }) func markThreadRead(bookingId : Nat) : async () {
@@ -692,165 +568,28 @@ mixin (
     openAIApiKey.value := ?key;
   };
 
-  // ---- Email notification settings (admin-gated) ----
-  // Admin can turn all transactional email notifications on or off from the
-  // admin portal. When false, every email helper skips sending silently.
-  public query ({ caller }) func getEmailSettings() : async { emailNotificationsEnabled : Bool } {
-    requireAdmin(caller);
-    { emailNotificationsEnabled = emailNotificationsEnabled.value };
-  };
-
-  public shared ({ caller }) func setEmailNotificationsEnabled(enabled : Bool) : async () {
-    requireAdmin(caller);
-    emailNotificationsEnabled.value := enabled;
-  };
-
   // ---- AI content generation (provider self-service) ----
   // All AI endpoints require a signed-in caller and a configured OpenAI key.
 
-  public shared ({ caller }) func generateListingDescription(bulletPoints : Text, category : ?Types.ServiceCategory, tone : ?Types.Tone) : async Text {
+  public shared ({ caller }) func generateListingDescription(bulletPoints : Text) : async Text {
     ignore requireProviderForCaller(caller);
     let ?key = openAIApiKey.value else Runtime.trap("OpenAI is not configured");
-    let prompt = "Write a compelling, professional service listing description for a DFW-area service provider based on these bullet points. Output only the description prose, no headings or bullet lists:" # OpenAI.categoryContext(category) # OpenAI.toneInstruction(tone) # "\n" # bulletPoints;
+    let prompt = "Write a compelling, professional service listing description for a DFW-area service provider based on these bullet points. Output only the description prose, no headings or bullet lists:\n" # bulletPoints;
     await* OpenAI.runChatCompletion(OpenAI.configForKey(key), prompt);
   };
 
-  public shared ({ caller }) func generateTitleAndTagline(keywords : Text, category : ?Types.ServiceCategory) : async [Text] {
+  public shared ({ caller }) func generateTitleAndTagline(keywords : Text) : async [Text] {
     ignore requireProviderForCaller(caller);
     let ?key = openAIApiKey.value else Runtime.trap("OpenAI is not configured");
-    let prompt = "Generate 3 distinct title and tagline pairs for a DFW-area service provider. Use these keywords where natural: " # keywords # "." # OpenAI.categoryContext(category) # " Format each pair as 'Title — Tagline', one per line. Output only the three lines.";
+    let prompt = "Generate 3 distinct title and tagline pairs for a DFW-area service provider. Use these keywords where natural: " # keywords # ". Format each pair as 'Title — Tagline', one per line. Output only the three lines.";
     let result = await* OpenAI.runChatCompletion(OpenAI.configForKey(key), prompt);
     result.split(#text "\n").toArray();
   };
 
-  public shared ({ caller }) func generatePromotionalContent(offerDetails : Text, category : ?Types.ServiceCategory, tone : ?Types.Tone) : async Text {
+  public shared ({ caller }) func generatePromotionalContent(offerDetails : Text) : async Text {
     ignore requireProviderForCaller(caller);
     let ?key = openAIApiKey.value else Runtime.trap("OpenAI is not configured");
-    let prompt = "Write short promotional copy (2-3 sentences) for a DFW-area service listing based on these offer details: " # offerDetails # "." # OpenAI.categoryContext(category) # OpenAI.toneInstruction(tone) # " Output only the promotional copy.";
-    await* OpenAI.runChatCompletion(OpenAI.configForKey(key), prompt);
-  };
-
-  // ---- AI image analysis (vision, gpt-4o) ----
-  // Each endpoint accepts a single uploaded work photo (Storage.ExternalBlob)
-  // and returns a full AI-generated assessment as Text. All require a signed-in
-  // caller and a configured OpenAI key. The vision model is gpt-4o with
-  // is_replicated=?false (see lib/openai.mo runVisionCompletion).
-
-  public shared ({ caller }) func analyzeImageDescription(image : Storage.ExternalBlob) : async Text {
-    requireSignedIn(caller);
-    let ?key = openAIApiKey.value else Runtime.trap("OpenAI is not configured");
-    let prompt = "Provide a full detailed description of the work shown in this image. Describe what you see, the setting, tools, materials, and the nature of the work being done.";
-    await* OpenAI.runVisionCompletion(OpenAI.configForKey(key), image, prompt);
-  };
-
-  public shared ({ caller }) func analyzeImageWork(image : Storage.ExternalBlob) : async Text {
-    requireSignedIn(caller);
-    let ?key = openAIApiKey.value else Runtime.trap("OpenAI is not configured");
-    let prompt = "Provide a full work-quality analysis of this image. Assess the materials, craftsmanship, completeness, and professional quality of the work shown. Give specific observations and an overall assessment.";
-    await* OpenAI.runVisionCompletion(OpenAI.configForKey(key), image, prompt);
-  };
-
-  public shared ({ caller }) func analyzeImageSafety(image : Storage.ExternalBlob) : async Text {
-    requireSignedIn(caller);
-    let ?key = openAIApiKey.value else Runtime.trap("OpenAI is not configured");
-    let prompt = "Provide a full safety assessment of this image. Identify any hazards, PPE usage, compliance concerns, and safety recommendations for the work environment shown.";
-    await* OpenAI.runVisionCompletion(OpenAI.configForKey(key), image, prompt);
-  };
-
-  // ---- AI text generation (gpt-4o-mini, matching existing pattern) ----
-  // New text generators for bios, company descriptions, booking messages,
-  // reply suggestions, and review drafts. All require a signed-in caller and
-  // a configured OpenAI key.
-
-  public shared ({ caller }) func generateBio(profileInfo : Text, tone : ?Types.Tone) : async Text {
-    requireSignedIn(caller);
-    let ?key = openAIApiKey.value else Runtime.trap("OpenAI is not configured");
-    let prompt = "Draft a professional bio for a service marketplace user based on this profile info: " # profileInfo # "." # OpenAI.toneInstruction(tone);
-    await* OpenAI.runChatCompletion(OpenAI.configForKey(key), prompt);
-  };
-
-  public shared ({ caller }) func generateCompanyDescription(companyInfo : Text, tone : ?Types.Tone) : async Text {
-    requireSignedIn(caller);
-    let ?key = openAIApiKey.value else Runtime.trap("OpenAI is not configured");
-    let prompt = "Draft a compelling company description for a service provider based on this info: " # companyInfo # "." # OpenAI.toneInstruction(tone);
-    await* OpenAI.runChatCompletion(OpenAI.configForKey(key), prompt);
-  };
-
-  public shared ({ caller }) func generateBookingMessage(bookingContext : Text) : async Text {
-    requireSignedIn(caller);
-    let ?key = openAIApiKey.value else Runtime.trap("OpenAI is not configured");
-    let prompt = "Draft a professional request message to a service provider based on this booking context: " # bookingContext;
-    await* OpenAI.runChatCompletion(OpenAI.configForKey(key), prompt);
-  };
-
-  // Suggest a contextually-relevant reply in a booking thread. The caller
-  // supplies the bookingId; the prior messages in that thread are pulled from
-  // the messages map and injected into the prompt so the suggestion reflects
-  // the actual conversation, not a generic reply. The optional
-  // conversationContext lets the caller add extra instructions (e.g. desired
-  // tone or a specific point to address). Only booking participants may use
-  // this endpoint (same gate as getThread / sendMessage).
-  public shared ({ caller }) func suggestReply(bookingId : Nat, conversationContext : ?Text) : async Text {
-    requireSignedIn(caller);
-    let ?key = openAIApiKey.value else Runtime.trap("OpenAI is not configured");
-    let booking = switch (Lib.getBooking(bookings, bookingId)) {
-      case (?b) b;
-      case null Runtime.trap("Booking not found");
-    };
-    let callerProvider = switch (Lib.getProviderByOwner(providers, caller)) {
-      case (?p) ?p;
-      case null null;
-    };
-    let isProvider = switch (callerProvider) {
-      case (?p) booking.providerId == p.id;
-      case null false;
-    };
-    if (booking.customerId != caller and not isProvider and not AccessControl.isAdmin(accessControlState, caller)) {
-      Runtime.trap("Unauthorized: not a participant on this booking");
-    };
-    // Build the conversation transcript from the thread's prior messages,
-    // labeled by role (customer / provider) so the model understands who said
-    // what. The caller is the one replying, so the suggestion is drafted from
-    // their perspective.
-    let thread = Lib.getThread(messages, bookingId);
-    let callerRoleLabel : Text = if (isProvider) "provider" else "customer";
-    let transcript = thread.foldLeft(
-      "",
-      func(acc : Text, m : Types.Message) : Text {
-        let senderLabel = if (m.sender == booking.customerId) "customer" else "provider";
-        acc # "\n" # senderLabel # ": " # m.content;
-      },
-    );
-    let contextLine = switch (conversationContext) {
-      case (?c) "\nAdditional instruction: " # c;
-      case null "";
-    };
-    let prompt = "You are drafting a reply for the " # callerRoleLabel # " in a service-booking conversation. Here is the conversation so far:" # transcript # "\n\nDraft a single, contextually-relevant reply from the " # callerRoleLabel # "'s perspective that moves the conversation forward helpfully and professionally. Output only the reply text, no preamble." # contextLine;
-    await* OpenAI.runChatCompletion(OpenAI.configForKey(key), prompt);
-  };
-
-  // Draft a customer review for a completed booking. Takes the booking's
-  // category and job details (resolved from the booking record) plus the
-  // caller's optional extra notes so the draft is specific to the service
-  // received. The bookingId is used to look up the real booking; the legacy
-  // bookingDetails/rating parameters are kept as optional overrides for
-  // callers that want to supply their own framing.
-  public shared ({ caller }) func generateReviewDraft(bookingId : Nat, rating : Nat, extraNotes : ?Text) : async Text {
-    requireSignedIn(caller);
-    let ?key = openAIApiKey.value else Runtime.trap("OpenAI is not configured");
-    let booking = switch (Lib.getBooking(bookings, bookingId)) {
-      case (?b) b;
-      case null Runtime.trap("Booking not found");
-    };
-    if (booking.customerId != caller) {
-      Runtime.trap("Unauthorized: only the booking customer may draft a review");
-    };
-    let categoryLine = OpenAI.categoryContext(?booking.category);
-    let notesLine = switch (extraNotes) {
-      case (?n) "\nAdditional customer notes: " # n;
-      case null "";
-    };
-    let prompt = "Draft a customer review for a completed service booking. Service category:" # categoryLine # " Job details: " # booking.jobDetails # ". Address: " # booking.address # ". Rating: " # rating.toText() # "/5. Write a thoughtful review that reflects this rating and is specific to the service received." # notesLine # " Output only the review text.";
+    let prompt = "Write short promotional copy (2-3 sentences) for a DFW-area service listing based on these offer details: " # offerDetails # ". Output only the promotional copy.";
     await* OpenAI.runChatCompletion(OpenAI.configForKey(key), prompt);
   };
 };

@@ -1,21 +1,12 @@
 // ProviderDetail — provider profile page with listings, reviews, and booking.
-// Pulls the provider, their listings, reviews, trust score, verification
-// tiers, and published microsite from the marketplace canister. A booking
-// dialog collects date/time/address/details and calls useCreateBooking.
-// Surfaces the embedded trust protocol (TrustBadge, SLA indicators) and an
-// AI review summary above the review list.
+// Pulls the provider, their listings, and reviews from the marketplace canister.
+// A booking dialog collects date/time/address/details and calls useCreateBooking.
 
 import { BookingStatusBadge } from "@/components/BookingStatusBadge";
 import { EmptyState } from "@/components/EmptyState";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ReviewCard } from "@/components/ReviewCard";
-import {
-  Skeleton,
-  SkeletonCard,
-  SkeletonList,
-  SkeletonText,
-} from "@/components/Skeleton";
 import { StarRating } from "@/components/StarRating";
-import { TrustBadge } from "@/components/TrustBadge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,11 +26,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import {
   useCreateBooking,
-  useGenerateReviewSummary,
-  useGetMicrositeBySlug,
   useGetProvider,
-  useGetTrustScore,
-  useGetVerification,
   useListListingsByProvider,
   useListReviewsByProvider,
 } from "@/hooks/useQueries";
@@ -49,7 +36,6 @@ import {
   CATEGORY_SHORT,
   PRICE_UNIT_LABELS,
   type PriceUnit,
-  type ReviewSummary,
   type ServiceListing,
   VERIFICATION_LABELS,
 } from "@/types";
@@ -59,30 +45,14 @@ import {
   CalendarDays,
   CheckCircle2,
   Clock,
-  ExternalLink,
-  Loader2,
   MapPin,
   MessageSquare,
   Package,
   ShieldCheck,
-  Sparkles,
   Star,
-  Timer,
-  Wand2,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-
-// Derive a microsite slug from a company name using the same slugify rules as
-// the docs/microsite editors. Used to look up a provider's published microsite.
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-");
-}
 
 function averageRating(ratingSum: bigint, ratingCount: bigint): number {
   const count = Number(ratingCount);
@@ -103,26 +73,6 @@ function initials(name: string): string {
     .toUpperCase();
 }
 
-// SLA indicators shown near the booking CTA — communicate the embedded
-// service-level protocol (typical response + completion windows).
-function SlaIndicators({ className }: { className?: string }) {
-  return (
-    <div
-      className={`flex flex-wrap items-center gap-3 text-xs font-body text-muted-foreground ${className ?? ""}`}
-      data-ocid="provider_detail.sla"
-    >
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1">
-        <Timer className="w-3.5 h-3.5 text-success" aria-hidden />
-        Responds in ~2 hrs
-      </span>
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1">
-        <Clock className="w-3.5 h-3.5 text-primary" aria-hidden />
-        Same-day scheduling
-      </span>
-    </div>
-  );
-}
-
 export function ProviderDetail() {
   const { providerId } = useParams({ strict: false }) as {
     providerId?: string;
@@ -140,18 +90,8 @@ export function ProviderDetail() {
   const { data: reviews, isLoading: reviewsLoading } = useListReviewsByProvider(
     providerId ?? null,
   );
-  const { data: trustScore } = useGetTrustScore(providerId ?? null);
-  const { data: verification } = useGetVerification(providerId ?? null);
-
-  // Look up a published microsite by slug derived from the company name.
-  const micrositeSlug = provider ? slugify(provider.companyName) : null;
-  const { data: microsite } = useGetMicrositeBySlug(micrositeSlug);
 
   const createBooking = useCreateBooking();
-  const generateReviewSummary = useGenerateReviewSummary();
-  const [reviewSummary, setReviewSummary] = useState<ReviewSummary | null>(
-    null,
-  );
 
   const [bookingOpen, setBookingOpen] = useState(false);
   const [selectedListing, setSelectedListing] = useState<ServiceListing | null>(
@@ -176,7 +116,6 @@ export function ProviderDetail() {
     : 0;
   const reviewCount = provider ? Number(provider.ratingCount) : 0;
   const isVerified = provider?.verificationStatus === "approved";
-  const micrositePublished = microsite?.published === true && !!microsite.slug;
 
   const sortedListings = useMemo(() => {
     const list = [...(listings ?? [])];
@@ -214,22 +153,6 @@ export function ProviderDetail() {
     setAddress("");
     setJobDetails("");
     setCustomerNote("");
-  };
-
-  const handleGenerateSummary = () => {
-    if (!providerId) return;
-    generateReviewSummary.mutate(providerId, {
-      onSuccess: (summary) => {
-        setReviewSummary(summary);
-        toast.success("AI review summary generated.");
-      },
-      onError: (err) =>
-        toast.error(
-          err instanceof Error
-            ? err.message
-            : "Could not generate a review summary. Please try again.",
-        ),
-    });
   };
 
   const handleSubmitBooking = (e: React.FormEvent) => {
@@ -273,23 +196,10 @@ export function ProviderDetail() {
   if (providerLoading) {
     return (
       <div
-        className="container mx-auto px-4 lg:px-6 py-10"
+        className="container mx-auto px-4 lg:px-6 py-16"
         data-ocid="page.provider_detail"
       >
-        <div className="max-w-4xl mx-auto animate-fade-in-up">
-          <Skeleton className="h-4 w-32 mb-4" />
-          <SkeletonCard withMedia={false} className="mb-6" />
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-4">
-              <Skeleton className="h-6 w-40" />
-              <SkeletonList count={2} withMedia />
-            </div>
-            <div className="space-y-4">
-              <Skeleton className="h-6 w-32" />
-              <SkeletonCard withMedia={false} />
-            </div>
-          </div>
-        </div>
+        <LoadingSpinner label="Loading provider" />
       </div>
     );
   }
@@ -339,7 +249,7 @@ export function ProviderDetail() {
 
       {/* Header / hero */}
       <section
-        className="container mx-auto px-4 lg:px-6 py-6 animate-fade-in-up"
+        className="container mx-auto px-4 lg:px-6 py-6"
         data-ocid="provider_detail.header"
       >
         <Card className="py-0 overflow-hidden">
@@ -376,22 +286,6 @@ export function ProviderDetail() {
                     {VERIFICATION_LABELS[provider.verificationStatus]}
                   </Badge>
                 )}
-                {micrositePublished ? (
-                  <button
-                    type="button"
-                    onClick={() =>
-                      void navigate({
-                        to: "/p/$slug",
-                        params: { slug: microsite.slug },
-                      })
-                    }
-                    className="inline-flex items-center gap-1.5 text-xs font-body text-primary hover:text-primary/80 transition-smooth focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
-                    data-ocid="provider_detail.view_microsite"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" aria-hidden />
-                    View microsite
-                  </button>
-                ) : null}
               </div>
 
               <div className="flex flex-wrap items-center gap-4 mb-4">
@@ -434,7 +328,7 @@ export function ProviderDetail() {
               </div>
             </div>
 
-            <div className="lg:self-start flex flex-col gap-3 lg:items-end">
+            <div className="lg:self-start">
               <Button
                 onClick={handleOpenBookingDefault}
                 disabled={sortedListings.length === 0}
@@ -445,12 +339,10 @@ export function ProviderDetail() {
                 Book this provider
               </Button>
               {sortedListings.length === 0 ? (
-                <p className="text-xs text-muted-foreground font-body lg:text-right">
+                <p className="text-xs text-muted-foreground font-body mt-2 lg:text-right">
                   No active services yet.
                 </p>
-              ) : (
-                <SlaIndicators className="lg:justify-end" />
-              )}
+              ) : null}
             </div>
           </div>
         </Card>
@@ -458,10 +350,7 @@ export function ProviderDetail() {
 
       <div className="container mx-auto px-4 lg:px-6 grid grid-cols-1 lg:grid-cols-3 gap-6 pb-12">
         {/* Listings */}
-        <section
-          className="lg:col-span-2 animate-fade-in-up"
-          data-ocid="provider_detail.listings"
-        >
+        <section className="lg:col-span-2" data-ocid="provider_detail.listings">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-display text-xl font-semibold text-foreground">
               Services
@@ -473,7 +362,7 @@ export function ProviderDetail() {
           </div>
 
           {listingsLoading ? (
-            <SkeletonList count={2} withMedia />
+            <LoadingSpinner label="Loading services" />
           ) : sortedListings.length === 0 ? (
             <EmptyState
               icon={Package}
@@ -485,7 +374,7 @@ export function ProviderDetail() {
               {sortedListings.map((listing, i) => (
                 <Card
                   key={listing.id}
-                  className="py-0 flex flex-col animate-card-hover-lift"
+                  className="py-0 flex flex-col"
                   data-ocid={`provider_detail.listing.${i + 1}`}
                 >
                   <CardHeader className="pb-3">
@@ -536,145 +425,41 @@ export function ProviderDetail() {
           )}
         </section>
 
-        {/* Sidebar: trust + reviews */}
-        <aside
-          className="flex flex-col gap-6 animate-fade-in-up"
-          data-ocid="provider_detail.sidebar"
-        >
-          <TrustBadge
-            trustScore={trustScore ?? null}
-            verificationTiers={verification ?? null}
-          />
-
-          <section data-ocid="provider_detail.reviews">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-display text-xl font-semibold text-foreground">
-                Reviews
-              </h2>
-              {reviewCount > 0 ? (
-                <span className="inline-flex items-center gap-1 text-sm font-body text-foreground">
-                  <Star
-                    className="w-4 h-4 fill-accent text-accent"
-                    aria-hidden
-                  />
-                  {rating.toFixed(1)}
-                </span>
-              ) : null}
-            </div>
-
-            {/* AI review summary */}
+        {/* Reviews */}
+        <section data-ocid="provider_detail.reviews">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display text-xl font-semibold text-foreground">
+              Reviews
+            </h2>
             {reviewCount > 0 ? (
-              <div className="mb-4">
-                {reviewSummary ? (
-                  <Card className="py-0 border-accent/30 bg-accent/5">
-                    <div className="p-4 flex flex-col gap-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="flex items-center gap-1.5">
-                          <Sparkles
-                            className="w-4 h-4 text-primary"
-                            aria-hidden
-                          />
-                          <span className="text-xs font-body font-semibold text-foreground uppercase tracking-wide">
-                            AI Review Summary
-                          </span>
-                        </div>
-                        <span className="inline-flex items-center gap-1 rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-body font-semibold uppercase tracking-wide text-accent-foreground ring-1 ring-accent/30">
-                          <Sparkles className="w-2.5 h-2.5" aria-hidden />
-                          AI-generated
-                        </span>
-                      </div>
-                      <p className="text-sm font-body text-foreground leading-relaxed">
-                        {reviewSummary.summary}
-                      </p>
-                      {reviewSummary.themes.length > 0 ? (
-                        <div className="flex flex-wrap gap-1.5 mt-1">
-                          {reviewSummary.themes.map((theme) => (
-                            <Badge
-                              key={theme}
-                              variant="outline"
-                              className="font-body text-xs border-accent/30 bg-accent/10 text-accent-foreground"
-                            >
-                              {theme}
-                            </Badge>
-                          ))}
-                        </div>
-                      ) : null}
-                      <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-body pt-1">
-                        <span className="font-semibold text-foreground">
-                          Sentiment:
-                        </span>
-                        {reviewSummary.sentiment}
-                      </div>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="outline"
-                        onClick={handleGenerateSummary}
-                        disabled={generateReviewSummary.isPending}
-                        className="mt-1 self-start h-7 gap-1.5 text-xs"
-                        data-ocid="provider_detail.regenerate_summary"
-                      >
-                        {generateReviewSummary.isPending ? (
-                          <Loader2
-                            className="w-3.5 h-3.5 animate-spin"
-                            aria-hidden
-                          />
-                        ) : (
-                          <Wand2 className="w-3.5 h-3.5" aria-hidden />
-                        )}
-                        Regenerate
-                      </Button>
-                    </div>
-                  </Card>
-                ) : (
-                  <Button
-                    type="button"
-                    size="sm"
-                    variant="outline"
-                    onClick={handleGenerateSummary}
-                    disabled={generateReviewSummary.isPending}
-                    className="w-full mb-4 gap-1.5 text-primary border-primary/30 hover:bg-primary/10"
-                    data-ocid="provider_detail.generate_summary"
-                  >
-                    {generateReviewSummary.isPending ? (
-                      <Loader2
-                        className="w-3.5 h-3.5 animate-spin"
-                        aria-hidden
-                      />
-                    ) : (
-                      <Sparkles className="w-3.5 h-3.5" aria-hidden />
-                    )}
-                    Generate AI Summary
-                  </Button>
-                )}
-              </div>
+              <span className="inline-flex items-center gap-1 text-sm font-body text-foreground">
+                <Star className="w-4 h-4 fill-accent text-accent" aria-hidden />
+                {rating.toFixed(1)}
+              </span>
             ) : null}
+          </div>
 
-            {reviewsLoading ? (
-              <div className="flex flex-col gap-3">
-                <SkeletonCard withMedia={false} />
-                <SkeletonCard withMedia={false} />
-              </div>
-            ) : sortedReviews.length === 0 ? (
-              <EmptyState
-                icon={Star}
-                title="No reviews yet"
-                description="Be the first to book and review this provider."
-              />
-            ) : (
-              <div className="flex flex-col gap-3">
-                {sortedReviews.map((review, i) => (
-                  <ReviewCard
-                    key={review.id}
-                    review={review}
-                    index={i}
-                    customerName="Customer"
-                  />
-                ))}
-              </div>
-            )}
-          </section>
-        </aside>
+          {reviewsLoading ? (
+            <LoadingSpinner label="Loading reviews" />
+          ) : sortedReviews.length === 0 ? (
+            <EmptyState
+              icon={Star}
+              title="No reviews yet"
+              description="Be the first to book and review this provider."
+            />
+          ) : (
+            <div className="flex flex-col gap-3">
+              {sortedReviews.map((review, i) => (
+                <ReviewCard
+                  key={review.id}
+                  review={review}
+                  index={i}
+                  customerName="Customer"
+                />
+              ))}
+            </div>
+          )}
+        </section>
       </div>
 
       {/* Booking dialog */}

@@ -568,24 +568,4 @@ export const mockBackend = {
   ],
   generatePromotionalContent: async (offerDetails: string) =>
     `Limited-time offer! ${offerDetails}. Book now and save 10% on your first booking. Fully insured, locally owned, and rated 5 stars by DFW customers.`,
-
-  // AI text generation (profile, company, booking, review)
-  generateBio: async (profileInfo: string) =>
-    `Dallas-Fort Worth based professional with a track record of reliable, on-time service. ${profileInfo}. Fully insured, locally owned, and committed to making every job stress-free for our customers across the DFW metroplex.`,
-  generateCompanyDescription: async (companyInfo: string) =>
-    `Family-owned DFW company specializing in ${companyInfo}. We combine experienced crews, modern equipment, and a satisfaction guarantee to deliver dependable service across Dallas, Plano, Frisco, and Fort Worth.`,
-  generateBookingMessage: async (bookingContext: string) =>
-    `Hi there! Thanks for booking with us. ${bookingContext}. We'll confirm the details shortly and reach out if we need anything else. Looking forward to a smooth, on-time job!`,
-  suggestReply: async (conversationContext: string) =>
-    `Thanks for the message! ${conversationContext}. We've got it handled — we'll be there as scheduled and will bring everything needed for a clean, efficient job. Let us know if anything changes.`,
-  generateReviewDraft: async (bookingDetails: string, _rating: bigint) =>
-    `Outstanding service from start to finish. ${bookingDetails}. The crew was professional, careful with our belongings, and finished ahead of schedule. Highly recommend to anyone in the DFW area.`,
-
-  // AI vision analysis (each accepts an uploaded image as ExternalBlob)
-  analyzeImageDescription: async (_image: any) =>
-    "A well-lit photograph showing a loaded 26ft box truck with furniture blankets and straps securing a 2-bedroom home's contents. Movers in branded uniforms are visible, with a clean, organized load indicating professional handling and care for fragile items.",
-  analyzeImageWork: async (_image: any) =>
-    "Work-portfolio image: completed residential move in Plano. Visible items include a disassembled bed frame, dining set, and ~30 labeled boxes stacked neatly in the destination garage. Crew used floor protection and shrink-wrap on upholstered pieces — consistent with full-service moving standards.",
-  analyzeImageSafety: async (_image: any) =>
-    "Safety analysis: No visible hazards. The load is properly strapped and weight-distributed. Crew is wearing closed-toe shoes and using a dolly with a strap. Truck liftgate is deployed on level ground with adequate clearance. No trip hazards, no overloaded stacks, and no unsecured heavy items.",
 };

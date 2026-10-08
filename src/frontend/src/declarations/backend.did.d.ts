@@ -10,24 +10,7 @@ import type { ActorMethod } from '@icp-sdk/core/agent';
 import type { IDL } from '@icp-sdk/core/candid';
 import type { Principal } from '@icp-sdk/core/principal';
 
-export interface AISearchResult {
-  'listingId' : bigint,
-  'score' : bigint,
-  'rationale' : string,
-  'providerId' : bigint,
-}
-export interface AssistantInput {
-  'context' : [] | [string],
-  'message' : string,
-}
-export interface AssistantMessage {
-  'content' : string,
-  'context' : [] | [string],
-  'role' : AssistantRole,
-  'timestamp' : Timestamp,
-}
-export type AssistantRole = { 'user' : null } |
-  { 'assistant' : null };
+export type AuthId = Principal;
 export interface AvailabilitySlot {
   'id' : bigint,
   'status' : SlotStatus,
@@ -72,66 +55,6 @@ export type BookingStatus = { 'scheduled' : null } |
   { 'accepted' : null } |
   { 'inProgress' : null };
 export interface Cell { 'value' : Value, 'name' : string }
-export interface CommunityReport {
-  'id' : bigint,
-  'status' : ReportStatus,
-  'resolutionNote' : [] | [string],
-  'createdAt' : Timestamp,
-  'updatedAt' : Timestamp,
-  'targetType' : ReportTargetType,
-  'targetId' : string,
-  'reporter' : UserId,
-  'reason' : string,
-}
-export interface CommunityReportInput {
-  'targetType' : ReportTargetType,
-  'targetId' : string,
-  'reason' : string,
-}
-export interface Dispute {
-  'id' : bigint,
-  'status' : DisputeStatus,
-  'bookingId' : bigint,
-  'createdAt' : Timestamp,
-  'aiTriageSuggestion' : [] | [string],
-  'updatedAt' : Timestamp,
-  'providerResponse' : [] | [string],
-  'adminResolution' : [] | [string],
-  'openedBy' : UserId,
-  'reason' : string,
-}
-export interface DisputeInput { 'bookingId' : bigint, 'reason' : string }
-export type DisputeStatus = { 'resolved' : null } |
-  { 'responded' : null } |
-  { 'escalated' : null } |
-  { 'open' : null };
-export interface DisputeTriage {
-  'suggestedResolution' : string,
-  'rationale' : string,
-  'severity' : string,
-  'disputeId' : bigint,
-}
-export interface Doc {
-  'id' : bigint,
-  'status' : DocStatus,
-  'title' : string,
-  'readingTime' : bigint,
-  'content' : string,
-  'createdAt' : Timestamp,
-  'slug' : string,
-  'author' : UserId,
-  'updatedAt' : Timestamp,
-  'category' : string,
-}
-export interface DocInput {
-  'status' : DocStatus,
-  'title' : string,
-  'content' : string,
-  'slug' : string,
-  'category' : string,
-}
-export type DocStatus = { 'published' : null } |
-  { 'draft' : null };
 export type Error = { 'FrontendOriginsNotConfigured' : null } |
   {
     'MixedSsoSources' : {
@@ -148,14 +71,20 @@ export type Error = { 'FrontendOriginsNotConfigured' : null } |
   { 'MissingField' : string } |
   { 'FrontendOriginMismatch' : { 'got' : string, 'expected' : Array<string> } };
 export type ExternalBlob = Uint8Array;
+export interface IdentityAttributes {
+  'principal' : AuthId,
+  'lastSeenAt' : bigint,
+  'displayName' : [] | [string],
+  'source' : IdentitySource,
+  'firstSeenAt' : bigint,
+  'email' : [] | [string],
+}
+export type IdentitySource = { 'internetIdentity' : null } |
+  { 'google' : null } |
+  { 'email' : null };
 export type MarketplaceRole = { 'admin' : null } |
   { 'provider' : null } |
   { 'customer' : null };
-export interface MatchProvidersInput {
-  'serviceArea' : [] | [string],
-  'need' : string,
-  'category' : [] | [string],
-}
 export interface Message {
   'id' : bigint,
   'content' : string,
@@ -165,31 +94,6 @@ export interface Message {
   'sentAt' : Timestamp,
 }
 export interface MessageInput { 'content' : string, 'bookingId' : bigint }
-export interface Microsite {
-  'id' : bigint,
-  'blockOrder' : Array<string>,
-  'generatedAt' : [] | [Timestamp],
-  'published' : boolean,
-  'createdAt' : Timestamp,
-  'slug' : string,
-  'heroCopy' : string,
-  'accentColor' : [] | [string],
-  'coverImage' : [] | [Uint8Array],
-  'updatedAt' : Timestamp,
-  'servicesCopy' : string,
-  'aboutCopy' : string,
-  'providerId' : bigint,
-}
-export interface MicrositeInput {
-  'blockOrder' : Array<string>,
-  'published' : boolean,
-  'slug' : string,
-  'heroCopy' : string,
-  'accentColor' : [] | [string],
-  'coverImage' : [] | [Uint8Array],
-  'servicesCopy' : string,
-  'aboutCopy' : string,
-}
 export interface Provider {
   'id' : bigint,
   'ratingSum' : bigint,
@@ -212,35 +116,6 @@ export interface ProviderInput {
   'companyName' : string,
   'serviceAreas' : Array<string>,
 }
-export interface ProviderInsights {
-  'insights' : string,
-  'recommendations' : Array<string>,
-  'providerId' : bigint,
-}
-export interface ProviderMatch {
-  'score' : bigint,
-  'rationale' : string,
-  'providerId' : bigint,
-}
-export interface Referral {
-  'id' : bigint,
-  'status' : ReferralStatus,
-  'referrer' : UserId,
-  'createdAt' : Timestamp,
-  'awardedAt' : [] | [Timestamp],
-  'referee' : UserId,
-}
-export type ReferralStatus = { 'expired' : null } |
-  { 'pending' : null } |
-  { 'awarded' : null };
-export type ReportStatus = { 'resolved' : null } |
-  { 'reviewing' : null } |
-  { 'open' : null } |
-  { 'dismissed' : null };
-export type ReportTargetType = { 'review' : null } |
-  { 'listing' : null } |
-  { 'provider' : null } |
-  { 'user' : null };
 export interface Result { 'hasMore' : boolean, 'rows' : Array<Array<Cell>> }
 export type Result__1 = { 'ok' : null } |
   { 'err' : Error };
@@ -261,32 +136,6 @@ export interface ReviewInput {
   'rating' : bigint,
   'writtenText' : string,
 }
-export interface ReviewSummary {
-  'sentiment' : string,
-  'summary' : string,
-  'themes' : Array<string>,
-  'providerId' : bigint,
-}
-export interface RewardLedgerEntry {
-  'id' : bigint,
-  'userId' : UserId,
-  'timestamp' : Timestamp,
-  'points' : bigint,
-  'reason' : string,
-}
-export interface RewardProfile {
-  'streak' : bigint,
-  'referralCode' : string,
-  'userId' : UserId,
-  'badges' : Array<string>,
-  'tier' : RewardTier,
-  'updatedAt' : Timestamp,
-  'points' : bigint,
-}
-export type RewardTier = { 'bronze' : null } |
-  { 'gold' : null } |
-  { 'platinum' : null } |
-  { 'silver' : null };
 export interface SearchFilters {
   'serviceArea' : [] | [string],
   'minRating' : [] | [bigint],
@@ -298,19 +147,6 @@ export interface SearchFilters {
 export interface SearchResult {
   'listing' : ServiceListing,
   'provider' : Provider,
-}
-export interface SeedListingOutcome {
-  'category' : { 'boxTruck' : null } |
-    { 'relocation' : null } |
-    { 'moving' : null } |
-    { 'trashHaul' : null },
-  'outcome' : { 'created' : null } |
-    { 'skipped' : null },
-}
-export interface SeedResult {
-  'listingOutcomes' : Array<SeedListingOutcome>,
-  'providerId' : bigint,
-  'providerCreated' : boolean,
 }
 export type ServiceCategory = { 'boxTruck' : null } |
   { 'relocation' : null } |
@@ -343,18 +179,6 @@ export interface ServiceListingInput {
 export type SlotStatus = { 'blocked' : null } |
   { 'available' : null };
 export type Timestamp = bigint;
-export type Tone = { 'concise' : null } |
-  { 'professional' : null } |
-  { 'friendly' : null };
-export interface TrustScore {
-  'reviews' : bigint,
-  'longevity' : bigint,
-  'updatedAt' : Timestamp,
-  'responsiveness' : bigint,
-  'overall' : bigint,
-  'disputeHistory' : bigint,
-  'verification' : bigint,
-}
 export interface User {
   'principal' : UserId,
   'displayName' : string,
@@ -363,7 +187,6 @@ export interface User {
   'email' : [] | [string],
   'updatedAt' : Timestamp,
   'phone' : [] | [string],
-  'workPhotos' : Array<ExternalBlob>,
   'avatar' : [] | [ExternalBlob],
 }
 export type UserId = Principal;
@@ -372,7 +195,6 @@ export interface UserInput {
   'role' : MarketplaceRole,
   'email' : [] | [string],
   'phone' : [] | [string],
-  'workPhotos' : Array<ExternalBlob>,
   'avatar' : [] | [ExternalBlob],
 }
 export type UserRole = { 'admin' : null } |
@@ -388,22 +210,6 @@ export type VerificationStatus = { 'pending' : null } |
   { 'approved' : null } |
   { 'rejected' : null } |
   { 'suspended' : null };
-export interface VerificationTierRecord {
-  'status' : VerificationTierStatus,
-  'note' : [] | [string],
-  'verifiedAt' : [] | [Timestamp],
-}
-export type VerificationTierStatus = { 'expired' : null } |
-  { 'pending' : null } |
-  { 'approved' : null } |
-  { 'unverified' : null } |
-  { 'rejected' : null };
-export interface VerificationTiers {
-  'background' : VerificationTierRecord,
-  'insurance' : VerificationTierRecord,
-  'business' : VerificationTierRecord,
-  'identity' : VerificationTierRecord,
-}
 export interface _ImmutableObjectStorageCreateCertificateResult {
   'method' : string,
   'blob_hash' : string,
@@ -417,34 +223,19 @@ export interface _ImmutableObjectStorageRefillResult {
 }
 export interface _SERVICE {
   '__accessControlState' : ActorMethod<[], any>,
-  '__assistantSessions' : ActorMethod<[], any>,
   '__bookings' : ActorMethod<[], any>,
-  '__communityReports' : ActorMethod<[], any>,
-  '__disputes' : ActorMethod<[], any>,
-  '__docs' : ActorMethod<[], any>,
-  '__emailNotificationsEnabled' : ActorMethod<[], any>,
+  '__identities' : ActorMethod<[], any>,
   '__listings' : ActorMethod<[], any>,
   '__messages' : ActorMethod<[], any>,
-  '__microsites' : ActorMethod<[], any>,
   '__nextBookingId' : ActorMethod<[], any>,
-  '__nextDisputeId' : ActorMethod<[], any>,
-  '__nextDocId' : ActorMethod<[], any>,
   '__nextListingId' : ActorMethod<[], any>,
   '__nextMessageId' : ActorMethod<[], any>,
-  '__nextMicrositeId' : ActorMethod<[], any>,
   '__nextProviderId' : ActorMethod<[], any>,
-  '__nextReferralId' : ActorMethod<[], any>,
-  '__nextReportId' : ActorMethod<[], any>,
   '__nextReviewId' : ActorMethod<[], any>,
-  '__nextRewardLedgerId' : ActorMethod<[], any>,
   '__nextSlotId' : ActorMethod<[], any>,
   '__openAIApiKey' : ActorMethod<[], any>,
-  '__providerVerifications' : ActorMethod<[], any>,
   '__providers' : ActorMethod<[], any>,
-  '__referrals' : ActorMethod<[], any>,
   '__reviews' : ActorMethod<[], any>,
-  '__rewardLedger' : ActorMethod<[], any>,
-  '__rewards' : ActorMethod<[], any>,
   '__slots' : ActorMethod<[], any>,
   '__users' : ActorMethod<[], any>,
   '_immutableObjectStorageBlobsAreLive' : ActorMethod<
@@ -469,80 +260,39 @@ export interface _SERVICE {
   '_internet_identity_sign_in_finish' : ActorMethod<[], Result__1>,
   '_internet_identity_sign_in_start' : ActorMethod<[], Uint8Array>,
   'acceptBooking' : ActorMethod<[bigint], Booking>,
-  'aiAssistant' : ActorMethod<[AssistantInput], AssistantMessage>,
-  'aiSearch' : ActorMethod<[string], Array<AISearchResult>>,
-  'analyzeImageDescription' : ActorMethod<[ExternalBlob], string>,
-  'analyzeImageSafety' : ActorMethod<[ExternalBlob], string>,
-  'analyzeImageWork' : ActorMethod<[ExternalBlob], string>,
-  'applyReferral' : ActorMethod<[string], Referral>,
   'approveProvider' : ActorMethod<[bigint], Provider>,
   'assignCallerUserRole' : ActorMethod<[Principal, UserRole], undefined>,
-  'awardPoints' : ActorMethod<[UserId, bigint, string], RewardLedgerEntry>,
   'blockAvailabilitySlot' : ActorMethod<[bigint], AvailabilitySlot>,
   'cancelBooking' : ActorMethod<[bigint], Booking>,
   'checkAvailability' : ActorMethod<[bigint, string, [] | [string]], boolean>,
   'completeBooking' : ActorMethod<[bigint], Booking>,
   'createBooking' : ActorMethod<[BookingInput], Booking>,
-  'createDoc' : ActorMethod<[DocInput], Doc>,
   'createListing' : ActorMethod<[ServiceListingInput], ServiceListing>,
   'createReview' : ActorMethod<[ReviewInput], Review>,
   'declineBooking' : ActorMethod<[bigint], Booking>,
   'deleteListing' : ActorMethod<[bigint], undefined>,
-  'escalateDispute' : ActorMethod<[bigint], Dispute>,
   'execute' : ActorMethod<[string], Result>,
-  'generateBio' : ActorMethod<[string, [] | [Tone]], string>,
-  'generateBookingMessage' : ActorMethod<[string], string>,
-  'generateCompanyDescription' : ActorMethod<[string, [] | [Tone]], string>,
-  'generateListingDescription' : ActorMethod<
-    [string, [] | [ServiceCategory], [] | [Tone]],
-    string
-  >,
-  'generateMicrosite' : ActorMethod<[bigint], Microsite>,
-  'generatePromotionalContent' : ActorMethod<
-    [string, [] | [ServiceCategory], [] | [Tone]],
-    string
-  >,
-  'generateProviderInsights' : ActorMethod<[bigint], ProviderInsights>,
-  'generateReviewDraft' : ActorMethod<[bigint, bigint, [] | [string]], string>,
-  'generateReviewSummary' : ActorMethod<[bigint], ReviewSummary>,
-  'generateTitleAndTagline' : ActorMethod<
-    [string, [] | [ServiceCategory]],
-    Array<string>
-  >,
+  'generateListingDescription' : ActorMethod<[string], string>,
+  'generatePromotionalContent' : ActorMethod<[string], string>,
+  'generateTitleAndTagline' : ActorMethod<[string], Array<string>>,
   'getBooking' : ActorMethod<[bigint], [] | [Booking]>,
   'getCallerUserRole' : ActorMethod<[], UserRole>,
-  'getDoc' : ActorMethod<[bigint], [] | [Doc]>,
-  'getDocBySlug' : ActorMethod<[string], [] | [Doc]>,
-  'getEmailSettings' : ActorMethod<
-    [],
-    { 'emailNotificationsEnabled' : boolean }
-  >,
-  'getLeaderboard' : ActorMethod<[bigint], Array<RewardProfile>>,
   'getListing' : ActorMethod<[bigint], [] | [ServiceListing]>,
-  'getMicrosite' : ActorMethod<[bigint], [] | [Microsite]>,
-  'getMicrositeBySlug' : ActorMethod<[string], [] | [Microsite]>,
   'getMyBooking' : ActorMethod<[bigint], [] | [Booking]>,
+  'getMyDisplayName' : ActorMethod<[], [] | [string]>,
+  'getMyEmail' : ActorMethod<[], [] | [string]>,
+  'getMyIdentity' : ActorMethod<[], [] | [IdentityAttributes]>,
+  'getMyIdentitySource' : ActorMethod<[], [] | [IdentitySource]>,
   'getMyProvider' : ActorMethod<[], [] | [Provider]>,
-  'getMyReferralCode' : ActorMethod<[], string>,
-  'getMyRewards' : ActorMethod<[], [] | [RewardProfile]>,
   'getMyUser' : ActorMethod<[], [] | [User]>,
   'getProvider' : ActorMethod<[bigint], [] | [Provider]>,
   'getReview' : ActorMethod<[bigint], [] | [Review]>,
-  'getRewardLedger' : ActorMethod<[UserId], Array<RewardLedgerEntry>>,
-  'getRewardsByUser' : ActorMethod<[UserId], [] | [RewardProfile]>,
   'getThread' : ActorMethod<[bigint], Array<Message>>,
-  'getTrustScore' : ActorMethod<[bigint], TrustScore>,
   'getUnreadMessageCount' : ActorMethod<[bigint], bigint>,
   'getUser' : ActorMethod<[UserId], [] | [User]>,
-  'getVerification' : ActorMethod<[bigint], VerificationTiers>,
   'isCallerAdmin' : ActorMethod<[], boolean>,
   'isOpenAIConfigured' : ActorMethod<[], boolean>,
-  'isOwnerSeeded' : ActorMethod<[], boolean>,
   'listAvailabilitySlots' : ActorMethod<[bigint], Array<AvailabilitySlot>>,
-  'listDisputes' : ActorMethod<[], Array<Dispute>>,
-  'listDisputesByBooking' : ActorMethod<[bigint], Array<Dispute>>,
-  'listDocs' : ActorMethod<[], Array<Doc>>,
-  'listDocsByCategory' : ActorMethod<[string], Array<Doc>>,
   'listListingsByCategory' : ActorMethod<
     [ServiceCategory],
     Array<ServiceListing>
@@ -552,58 +302,31 @@ export interface _SERVICE {
   'listProviderBookings' : ActorMethod<[bigint], Array<Booking>>,
   'listProviders' : ActorMethod<[], Array<Provider>>,
   'listProvidersByCategory' : ActorMethod<[ServiceCategory], Array<Provider>>,
-  'listReports' : ActorMethod<[], Array<CommunityReport>>,
   'listReviewsByBooking' : ActorMethod<[bigint], Array<Review>>,
   'listReviewsByProvider' : ActorMethod<[bigint], Array<Review>>,
   'listUsers' : ActorMethod<[], Array<User>>,
   'markThreadRead' : ActorMethod<[bigint], undefined>,
-  'matchProviders' : ActorMethod<[MatchProvidersInput], Array<ProviderMatch>>,
   'moderateReview' : ActorMethod<
     [bigint, { 'hide' : null } | { 'restore' : null }],
     Review
   >,
-  'openDispute' : ActorMethod<[DisputeInput], Dispute>,
-  'publishDoc' : ActorMethod<[bigint, DocStatus], Doc>,
-  'publishMicrosite' : ActorMethod<[bigint, boolean], Microsite>,
   'registerProvider' : ActorMethod<[ProviderInput], Provider>,
   'reinstateProvider' : ActorMethod<[bigint], Provider>,
   'rejectProvider' : ActorMethod<[bigint, string], Provider>,
-  'reportTarget' : ActorMethod<[CommunityReportInput], CommunityReport>,
-  'resolveDispute' : ActorMethod<[bigint, string], Dispute>,
-  'resolveReport' : ActorMethod<[bigint, string, boolean], CommunityReport>,
-  'respondToDispute' : ActorMethod<[bigint, string], Dispute>,
   'respondToReview' : ActorMethod<[bigint, string], Review>,
   'scheduleBooking' : ActorMethod<[bigint], Booking>,
   'schema' : ActorMethod<[], string>,
   'searchProviders' : ActorMethod<[SearchFilters], Array<SearchResult>>,
-  'seedOwnerServices' : ActorMethod<[], SeedResult>,
   'sendMessage' : ActorMethod<[MessageInput], Message>,
   'setAvailabilitySlot' : ActorMethod<
     [AvailabilitySlotInput],
     AvailabilitySlot
   >,
-  'setEmailNotificationsEnabled' : ActorMethod<[boolean], undefined>,
   'setOpenAIApiKey' : ActorMethod<[string], undefined>,
   'startBooking' : ActorMethod<[bigint], Booking>,
-  'suggestReply' : ActorMethod<[bigint, [] | [string]], string>,
   'suspendProvider' : ActorMethod<[bigint, string], Provider>,
-  'triageDispute' : ActorMethod<[bigint], DisputeTriage>,
-  'updateDoc' : ActorMethod<[bigint, DocInput], Doc>,
   'updateListing' : ActorMethod<[bigint, ServiceListingInput], ServiceListing>,
   'updateMyProvider' : ActorMethod<[ProviderInput], Provider>,
-  'updateVerificationTier' : ActorMethod<
-    [
-      bigint,
-      { 'background' : null } |
-        { 'insurance' : null } |
-        { 'business' : null } |
-        { 'identity' : null },
-      VerificationTierStatus,
-      [] | [string],
-    ],
-    VerificationTiers
-  >,
-  'upsertMyMicrosite' : ActorMethod<[MicrositeInput], Microsite>,
   'upsertMyUser' : ActorMethod<[UserInput], User>,
 }
 export declare const idlService: IDL.ServiceClass;

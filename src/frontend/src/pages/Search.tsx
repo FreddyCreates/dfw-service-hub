@@ -1,13 +1,10 @@
-// Search — provider/browse page with URL-synced filters (V3 polish).
-// Adds an AI-powered natural-language search bar (useAiSearch) alongside the
-// existing filter-based search, skeleton loading states for results,
-// card-hover-lift motion on result cards, and trust scores on provider cards.
-// Category, keyword, service area, rating, price range, and sort options all
-// flow through TanStack Router search params so results are shareable.
+// Search — provider/browse page with URL-synced filters.
+// Category, keyword, service area, rating, price range, and sort options
+// all flow through TanStack Router search params so results are shareable.
 
 import { EmptyState } from "@/components/EmptyState";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { ServiceProviderCard } from "@/components/ServiceProviderCard";
-import { SkeletonCard } from "@/components/Skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,21 +16,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { useAiSearch, useSearchProviders } from "@/hooks/useQueries";
+import { useSearchProviders } from "@/hooks/useQueries";
 import {
   CATEGORY_LABELS,
   type SearchResult,
   type ServiceCategory,
 } from "@/types";
 import { useNavigate, useSearch } from "@tanstack/react-router";
-import {
-  Filter,
-  Loader2,
-  SearchX,
-  SlidersHorizontal,
-  Sparkles,
-  X,
-} from "lucide-react";
+import { Filter, SearchX, SlidersHorizontal, X } from "lucide-react";
 import { useMemo, useState } from "react";
 
 // Route search params (must match App.tsx validateSearch + extensions).
@@ -91,13 +81,6 @@ export function SearchPage() {
   const [serviceArea, setServiceArea] = useState(search.serviceArea ?? "");
   const [showFilters, setShowFilters] = useState(false);
 
-  // AI natural-language search state — separate from the filter-based search.
-  // The AI bar accepts a free-text query (e.g. "I need a box truck Saturday in
-  // Plano for a one-bedroom move") and returns ranked matches with rationale.
-  const [aiQuery, setAiQuery] = useState("");
-  const [aiActive, setAiActive] = useState(false);
-  const aiSearch = useAiSearch(aiActive ? aiQuery.trim() || null : null);
-
   const category = search.category as ServiceCategory | undefined;
   const minRating = search.minRating ? Number(search.minRating) : undefined;
   const maxPrice = search.maxPrice ? Number(search.maxPrice) : undefined;
@@ -151,20 +134,6 @@ export function SearchPage() {
     });
   };
 
-  const handleAiSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!aiQuery.trim()) {
-      setAiActive(false);
-      return;
-    }
-    setAiActive(true);
-  };
-
-  const handleClearAi = () => {
-    setAiQuery("");
-    setAiActive(false);
-  };
-
   const handleCategoryChange = (value: string) => {
     updateSearch({
       category: value === "all" ? undefined : value,
@@ -191,8 +160,6 @@ export function SearchPage() {
   const handleClearFilters = () => {
     setKeyword("");
     setServiceArea("");
-    setAiQuery("");
-    setAiActive(false);
     void navigate({
       to: "/search",
       search: { sort: "rating" },
@@ -206,23 +173,6 @@ export function SearchPage() {
     minRating !== undefined ||
     maxPrice !== undefined;
 
-  // When AI search is active, show AI-ranked results; otherwise show the
-  // filter-based sorted results. AI results are matched back to the
-  // filter-based results so we can render them through ServiceProviderCard
-  // (which needs the full Provider object).
-  const aiResults = useMemo(() => {
-    if (!aiActive || !aiSearch.data) return [];
-    const byProviderId = new Map(
-      (results ?? []).map((r) => [r.provider.id, r]),
-    );
-    return aiSearch.data
-      .map((ai) => byProviderId.get(ai.providerId))
-      .filter((r): r is SearchResult => r != null);
-  }, [aiActive, aiSearch.data, results]);
-
-  const displayResults = aiActive ? aiResults : sortedResults;
-  const displayLoading = aiActive ? aiSearch.isLoading : isLoading;
-
   return (
     <div className="bg-background min-h-screen" data-ocid="page.search">
       {/* Search header */}
@@ -230,13 +180,7 @@ export function SearchPage() {
         className="bg-card border-b border-border"
         data-ocid="search.header"
       >
-        <div
-          className="container mx-auto px-4 lg:px-6 py-8"
-          style={{
-            paddingTop: "var(--space-8)",
-            paddingBottom: "var(--space-8)",
-          }}
-        >
+        <div className="container mx-auto px-4 lg:px-6 py-8">
           <h1 className="font-display text-2xl lg:text-3xl font-semibold text-foreground mb-1">
             Find a provider
           </h1>
@@ -244,56 +188,6 @@ export function SearchPage() {
             Browse verified box truck, relocation, trash haul, and moving
             professionals across Dallas-Fort Worth.
           </p>
-
-          {/* AI-powered natural-language search bar */}
-          <form
-            onSubmit={handleAiSubmit}
-            className="flex flex-col sm:flex-row gap-3 mb-4"
-            data-ocid="search.ai_form"
-          >
-            <div className="relative flex-1">
-              <Sparkles
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-trust-bound"
-                aria-hidden
-              />
-              <Input
-                type="text"
-                placeholder="Describe your job in plain English — e.g. 'box truck Saturday in Plano for a one-bedroom move'"
-                value={aiQuery}
-                onChange={(e) => setAiQuery(e.target.value)}
-                className="pl-10 h-12 border-trust-bound/30 focus-visible:border-trust-bound"
-                aria-label="AI-powered search"
-                data-ocid="search.ai_input"
-              />
-            </div>
-            <Button
-              type="submit"
-              size="lg"
-              className="h-12 gradient-trust text-primary-foreground border-0"
-              disabled={aiSearch.isLoading}
-              data-ocid="search.ai_submit"
-            >
-              {aiSearch.isLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-              ) : (
-                <Sparkles className="w-4 h-4" aria-hidden />
-              )}
-              Ask AI
-            </Button>
-            {aiActive ? (
-              <Button
-                type="button"
-                variant="outline"
-                size="lg"
-                className="h-12"
-                onClick={handleClearAi}
-                data-ocid="search.ai_clear"
-              >
-                <X className="w-4 h-4" aria-hidden />
-                Clear AI
-              </Button>
-            ) : null}
-          </form>
 
           {/* Keyword + area search bar */}
           <form
@@ -439,17 +333,11 @@ export function SearchPage() {
           ) : null}
 
           {/* Active filter chips */}
-          {hasActiveFilters || aiActive ? (
+          {hasActiveFilters ? (
             <div
               className="mt-4 flex flex-wrap items-center gap-2"
               data-ocid="search.active_filters"
             >
-              {aiActive ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-trust-bound/15 border border-trust-bound/30 px-3 py-1 text-xs font-body text-trust-bound-foreground">
-                  <Sparkles className="w-3 h-3" aria-hidden />
-                  AI: “{aiQuery}”
-                </span>
-              ) : null}
               {category ? (
                 <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 border border-primary/20 px-3 py-1 text-xs font-body text-primary">
                   {CATEGORY_LABELS[category]}
@@ -494,56 +382,30 @@ export function SearchPage() {
       {/* Results */}
       <section
         className="container mx-auto px-4 lg:px-6 py-8"
-        style={{
-          paddingTop: "var(--space-8)",
-          paddingBottom: "var(--space-8)",
-        }}
         data-ocid="search.results"
       >
         <div className="flex items-center justify-between mb-6">
           <p className="text-sm text-muted-foreground font-body">
-            {displayLoading
-              ? aiActive
-                ? "AI is ranking providers…"
-                : "Searching…"
-              : `${displayResults.length} provider${displayResults.length === 1 ? "" : "s"} found${aiActive ? " (AI-ranked)" : ""}`}
+            {isLoading
+              ? "Searching…"
+              : `${sortedResults.length} provider${sortedResults.length === 1 ? "" : "s"} found`}
           </p>
         </div>
 
-        {displayLoading ? (
-          <div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-            data-ocid="search.loading_state"
-          >
-            {Array.from({ length: 6 }).map((_, i) => (
-              <SkeletonCard
-                // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder cards
-                key={i}
-                withMedia={false}
-                className="animate-fade-in-up"
-              />
-            ))}
-          </div>
-        ) : displayResults.length === 0 ? (
+        {isLoading ? (
+          <LoadingSpinner label="Loading providers" />
+        ) : sortedResults.length === 0 ? (
           <EmptyState
             icon={SearchX}
-            title={
-              aiActive
-                ? "No AI matches found"
-                : "No providers match your search"
-            }
-            description={
-              aiActive
-                ? "Try rephrasing your request, or switch to the filter-based search below."
-                : "Try adjusting your filters — broaden the service area, lower the minimum rating, or clear all filters to see every provider."
-            }
+            title="No providers match your search"
+            description="Try adjusting your filters — broaden the service area, lower the minimum rating, or clear all filters to see every provider."
             action={
-              hasActiveFilters || aiActive ? (
+              hasActiveFilters ? (
                 <Button
                   onClick={handleClearFilters}
                   data-ocid="search.empty_clear"
                 >
-                  Clear all
+                  Clear all filters
                 </Button>
               ) : undefined
             }
@@ -551,13 +413,12 @@ export function SearchPage() {
           />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {displayResults.map((result, i) => (
-              <div
+            {sortedResults.map((result, i) => (
+              <ServiceProviderCard
                 key={result.provider.id}
-                className={`animate-fade-in-up animate-card-hover-lift stagger-${Math.min(i + 1, 6)}`}
-              >
-                <ServiceProviderCard provider={result.provider} index={i} />
-              </div>
+                provider={result.provider}
+                index={i}
+              />
             ))}
           </div>
         )}

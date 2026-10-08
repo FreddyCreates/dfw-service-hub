@@ -1,60 +1,36 @@
 // AdminPortal — admin dashboard for the DFW marketplace.
 // Shows summary metrics (pending verifications, active bookings, reported
-// reviews, total providers, total customers, open disputes, open reports) and
-// quick action links to the provider verification, bookings, review
-// moderation, dispute, and report pages. Dark portal theme, skeleton loading,
-// and motion utilities.
+// reviews, total providers, total customers) and quick action links to the
+// provider verification, bookings, and review moderation pages.
 
 import { LoadingSpinner } from "@/components/LoadingSpinner";
-import { SkeletonCard } from "@/components/Skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import type { SeedResult } from "@/hooks/useBackend";
 import {
-  useGetEmailSettings,
-  useIsOwnerSeeded,
-  useListDisputes,
   useListMyBookings,
   useListProviders,
-  useListReports,
   useListReviewsByProvider,
   useListUsers,
-  useSeedOwnerServices,
-  useSetEmailNotificationsEnabled,
 } from "@/hooks/useQueries";
-import type {
-  Booking,
-  Dispute,
-  Provider,
-  Review,
-  ServiceCategory,
-} from "@/types";
-import { CATEGORY_LABELS } from "@/types";
+import type { Booking, Provider, Review } from "@/types";
 import { Link } from "@tanstack/react-router";
 import {
   ArrowRight,
   Building2,
-  CheckCircle2,
   EyeOff,
-  Flag,
-  Mail,
   Package,
-  Scale,
-  ShieldAlert,
   ShieldCheck,
-  Sparkles,
   Star,
   Truck,
   Users,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
-// A review is considered "reported"/hidden when the backend has set its
-// hidden flag (hideReview sets hidden=true and preserves writtenText).
+// A review is considered "reported"/hidden when its writtenText is empty
+// (moderateReview with "hide" clears text).
 function isHidden(r: Review): boolean {
-  return r.hidden;
+  return r.writtenText.trim() === "";
 }
 
 function isActiveBooking(b: Booking): boolean {
@@ -66,16 +42,6 @@ function isActiveBooking(b: Booking): boolean {
   );
 }
 
-function isOpenDispute(d: Dispute): boolean {
-  return (
-    d.status === "open" || d.status === "responded" || d.status === "escalated"
-  );
-}
-
-function isOpenReport(r: { status: string }): boolean {
-  return r.status === "open" || r.status === "reviewing";
-}
-
 interface MetricCardProps {
   icon: typeof Users;
   label: string;
@@ -83,7 +49,6 @@ interface MetricCardProps {
   hint?: string;
   accent?: "primary" | "warning" | "destructive" | "success";
   dataOcid: string;
-  stagger?: number;
 }
 
 const accentMap: Record<NonNullable<MetricCardProps["accent"]>, string> = {
@@ -100,13 +65,9 @@ function MetricCard({
   hint,
   accent = "primary",
   dataOcid,
-  stagger = 1,
 }: MetricCardProps) {
   return (
-    <Card
-      className={`p-5 shadow-subtle animate-fade-in-up stagger-${stagger}`}
-      data-ocid={dataOcid}
-    >
+    <Card className="p-5" data-ocid={dataOcid}>
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs text-muted-foreground font-body uppercase tracking-wide">
@@ -138,7 +99,6 @@ interface QuickActionProps {
   description: string;
   badge?: number;
   dataOcid: string;
-  stagger?: number;
 }
 
 function QuickAction({
@@ -148,16 +108,11 @@ function QuickAction({
   description,
   badge,
   dataOcid,
-  stagger = 1,
 }: QuickActionProps) {
   return (
-    <Link
-      to={to}
-      className="block animate-fade-in-up"
-      style={{ animationDelay: `${0.05 * stagger}s` }}
-    >
+    <Link to={to} className="block">
       <Card
-        className="p-5 shadow-subtle hover:shadow-md hover:border-primary/30 transition-smooth cursor-pointer h-full animate-card-hover-lift"
+        className="p-5 hover:shadow-sm hover:border-primary/30 transition-smooth cursor-pointer h-full"
         data-ocid={dataOcid}
       >
         <div className="flex items-start gap-3">
@@ -209,331 +164,10 @@ function ProviderReviews({
   return null;
 }
 
-// Ordered list of the owner's four service categories — drives the
-// per-category outcome list in the Marketplace Setup section.
-const SEED_CATEGORIES: ServiceCategory[] = [
-  "boxTruck",
-  "relocation",
-  "trashHaul",
-  "moving",
-];
-
-// Marketplace Setup — owner-only surface for seeding the owner's four
-// service categories. Shows seed status, a Seed Owner Services action, and a
-// per-category outcome summary once seeding completes.
-function MarketplaceSetup() {
-  const { data: seeded, isLoading: seededLoading } = useIsOwnerSeeded();
-  const seedMutation = useSeedOwnerServices();
-  const [result, setResult] = useState<SeedResult | null>(null);
-
-  const isSeeded = seeded === true;
-  const isMutating = seedMutation.isPending;
-
-  function handleSeed() {
-    setResult(null);
-    seedMutation.mutate(undefined, {
-      onSuccess: (seedResult) => {
-        setResult(seedResult);
-      },
-    });
-  }
-
-  return (
-    <Card
-      className="p-6 shadow-subtle animate-fade-in-up"
-      data-ocid="admin.section.marketplace_setup"
-    >
-      <div className="flex flex-col gap-1 mb-5">
-        <div className="flex items-center gap-2 text-primary">
-          <Sparkles className="w-4 h-4" aria-hidden />
-          <span className="text-xs font-body font-medium uppercase tracking-wide">
-            Marketplace setup
-          </span>
-        </div>
-        <h2 className="font-display text-xl font-semibold text-foreground">
-          Seed owner services
-        </h2>
-        <p className="text-sm text-muted-foreground font-body max-w-2xl">
-          Populate the marketplace with your own provider record and one listing
-          for each of the four DFW service categories. Run this once when
-          onboarding the marketplace.
-        </p>
-      </div>
-
-      {/* Seed status indicator */}
-      <div
-        className="flex items-center gap-3 rounded-lg border border-border bg-secondary/40 p-4 mb-5"
-        data-ocid="admin.marketplace_setup.status"
-      >
-        <div
-          className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${
-            seededLoading
-              ? "bg-muted"
-              : isSeeded
-                ? "bg-success/15 text-success"
-                : "bg-warning/15 text-warning-foreground"
-          }`}
-        >
-          {seededLoading ? (
-            <LoadingSpinner label="" />
-          ) : isSeeded ? (
-            <CheckCircle2 className="w-5 h-5" aria-hidden />
-          ) : (
-            <Sparkles className="w-5 h-5" aria-hidden />
-          )}
-        </div>
-        <div className="min-w-0">
-          <p className="font-body font-medium text-foreground">
-            {seededLoading
-              ? "Checking seed status…"
-              : isSeeded
-                ? "Owner services are seeded"
-                : "Owner services not yet seeded"}
-          </p>
-          <p className="text-xs text-muted-foreground font-body mt-0.5">
-            {isSeeded
-              ? "Your provider record and four listings already exist. Re-running will skip existing entries."
-              : "Run the seed action below to create your provider record and listings."}
-          </p>
-        </div>
-      </div>
-
-      {/* Seed action */}
-      <div className="flex flex-wrap items-center gap-3 mb-5">
-        <Button
-          onClick={handleSeed}
-          disabled={isMutating || seededLoading}
-          data-ocid="admin.marketplace_setup.seed_button"
-        >
-          {isMutating ? (
-            <>
-              <LoadingSpinner label="" />
-              <span className="ml-2">Seeding…</span>
-            </>
-          ) : isSeeded ? (
-            "Re-run seed"
-          ) : (
-            "Seed owner services"
-          )}
-        </Button>
-        {seedMutation.isError ? (
-          <p
-            className="text-sm text-destructive font-body"
-            data-ocid="admin.marketplace_setup.error_state"
-            role="alert"
-          >
-            Seeding failed.{" "}
-            {seedMutation.error instanceof Error
-              ? seedMutation.error.message
-              : "Please try again."}
-          </p>
-        ) : null}
-      </div>
-
-      {/* Seed result summary */}
-      {result ? (
-        <div
-          className="rounded-lg border border-border bg-card p-5"
-          data-ocid="admin.marketplace_setup.result"
-        >
-          <div className="flex items-center gap-2 mb-4">
-            <CheckCircle2 className="w-5 h-5 text-success" aria-hidden />
-            <h3 className="font-display font-semibold text-foreground">
-              Seed complete
-            </h3>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 mb-4">
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground font-body">
-                Provider created:
-              </span>
-              <Badge
-                variant="outline"
-                className={
-                  result.providerCreated
-                    ? "border-success/40 bg-success/10 text-success"
-                    : "border-border bg-secondary text-muted-foreground"
-                }
-                data-ocid="admin.marketplace_setup.result.provider_created"
-              >
-                {result.providerCreated ? "Yes" : "No"}
-              </Badge>
-            </div>
-            {result.providerId ? (
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-sm text-muted-foreground font-body">
-                  Provider ID:
-                </span>
-                <code
-                  className="font-mono text-xs text-foreground bg-secondary px-2 py-0.5 rounded truncate max-w-[12rem]"
-                  data-ocid="admin.marketplace_setup.result.provider_id"
-                >
-                  {result.providerId}
-                </code>
-              </div>
-            ) : null}
-          </div>
-
-          <p className="text-xs font-body uppercase tracking-wide text-muted-foreground mb-2">
-            Listing outcomes
-          </p>
-          <ul
-            className="grid grid-cols-1 sm:grid-cols-2 gap-2"
-            data-ocid="admin.marketplace_setup.result.list"
-          >
-            {SEED_CATEGORIES.map((category, idx) => {
-              const outcome = result.listingOutcomes.find(
-                (o) => o.category === category,
-              );
-              const wasCreated = outcome?.outcome === "created";
-              return (
-                <li
-                  key={category}
-                  className="flex items-center justify-between gap-3 rounded-md border border-border bg-secondary/30 px-3 py-2"
-                  data-ocid={`admin.marketplace_setup.result.item.${idx}`}
-                >
-                  <span className="font-body text-sm text-foreground">
-                    {CATEGORY_LABELS[category]}
-                  </span>
-                  <Badge
-                    variant="outline"
-                    className={
-                      wasCreated
-                        ? "border-success/40 bg-success/10 text-success"
-                        : "border-border bg-muted text-muted-foreground"
-                    }
-                    data-ocid={`admin.marketplace_setup.result.outcome.${idx}`}
-                  >
-                    {wasCreated ? "Created" : "Already existed"}
-                  </Badge>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
-      ) : null}
-    </Card>
-  );
-}
-
-// Email Notifications — owner-only toggle for transactional email. Reads the
-// current state via useGetEmailSettings and writes via
-// useSetEmailNotificationsEnabled, with loading + success feedback.
-function EmailNotifications() {
-  const { data: settings, isLoading } = useGetEmailSettings();
-  const toggleMutation = useSetEmailNotificationsEnabled();
-  const [justChanged, setJustChanged] = useState(false);
-
-  const enabled = settings?.emailNotificationsEnabled ?? false;
-  const isMutating = toggleMutation.isPending;
-
-  // Brief success confirmation after a successful toggle.
-  useEffect(() => {
-    if (!justChanged) return;
-    const t = window.setTimeout(() => setJustChanged(false), 2500);
-    return () => window.clearTimeout(t);
-  }, [justChanged]);
-
-  function handleToggle(next: boolean) {
-    if (next === enabled || isMutating) return;
-    toggleMutation.mutate(next, {
-      onSuccess: () => setJustChanged(true),
-    });
-  }
-
-  return (
-    <Card
-      className="p-6 shadow-subtle animate-fade-in-up stagger-2"
-      data-ocid="admin.section.email_notifications"
-      id="email-settings"
-    >
-      <div className="flex flex-col gap-1 mb-5">
-        <div className="flex items-center gap-2 text-primary">
-          <Mail className="w-4 h-4" aria-hidden />
-          <span className="text-xs font-body font-medium uppercase tracking-wide">
-            Notifications
-          </span>
-        </div>
-        <h2 className="font-display text-xl font-semibold text-foreground">
-          Email notifications
-        </h2>
-        <p className="text-sm text-muted-foreground font-body max-w-2xl">
-          When enabled, booking confirmations, status updates, and new message
-          notifications are sent to customers and providers via email.
-        </p>
-      </div>
-
-      <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-secondary/40 p-4">
-        <div className="min-w-0">
-          <p className="font-body font-medium text-foreground">
-            Transactional email
-          </p>
-          <p className="text-xs text-muted-foreground font-body mt-0.5">
-            {isLoading
-              ? "Loading current setting…"
-              : enabled
-                ? "Currently enabled — notifications are being sent."
-                : "Currently disabled — no notifications are sent."}
-          </p>
-        </div>
-        <div className="flex items-center gap-3 shrink-0">
-          {justChanged ? (
-            <output
-              className="text-xs font-body text-success flex items-center gap-1"
-              data-ocid="admin.email_notifications.success_state"
-            >
-              <CheckCircle2 className="w-3.5 h-3.5" aria-hidden />
-              Saved
-            </output>
-          ) : null}
-          <Switch
-            checked={enabled}
-            onCheckedChange={handleToggle}
-            disabled={isLoading || isMutating}
-            aria-label="Toggle transactional email notifications"
-            data-ocid="admin.email_notifications.toggle"
-          />
-          {isMutating ? (
-            <LoadingSpinner label="" />
-          ) : (
-            <Badge
-              variant="outline"
-              className={
-                enabled
-                  ? "border-success/40 bg-success/10 text-success"
-                  : "border-border bg-muted text-muted-foreground"
-              }
-              data-ocid="admin.email_notifications.state_badge"
-            >
-              {enabled ? "On" : "Off"}
-            </Badge>
-          )}
-        </div>
-      </div>
-
-      {toggleMutation.isError ? (
-        <p
-          className="text-sm text-destructive font-body mt-3"
-          data-ocid="admin.email_notifications.error_state"
-          role="alert"
-        >
-          Could not update email setting.{" "}
-          {toggleMutation.error instanceof Error
-            ? toggleMutation.error.message
-            : "Please try again."}
-        </p>
-      ) : null}
-    </Card>
-  );
-}
-
 export function AdminPortal() {
   const { data: providers, isLoading: providersLoading } = useListProviders();
   const { data: users, isLoading: usersLoading } = useListUsers();
   const { data: myBookings, isLoading: bookingsLoading } = useListMyBookings();
-  const { data: disputes, isLoading: disputesLoading } = useListDisputes();
-  const { data: reports, isLoading: reportsLoading } = useListReports();
 
   const providerList = providers ?? [];
 
@@ -588,27 +222,12 @@ export function AdminPortal() {
     [myBookings],
   );
 
-  const openDisputes = useMemo(
-    () => (disputes ?? []).filter(isOpenDispute).length,
-    [disputes],
-  );
-
-  const openReports = useMemo(
-    () => (reports ?? []).filter(isOpenReport).length,
-    [reports],
-  );
-
-  const isLoading =
-    providersLoading ||
-    usersLoading ||
-    bookingsLoading ||
-    disputesLoading ||
-    reportsLoading;
+  const isLoading = providersLoading || usersLoading || bookingsLoading;
 
   return (
     <div className="bg-background" data-ocid="page.admin">
       <section className="container mx-auto px-4 lg:px-6 py-10 lg:py-14">
-        <div className="flex flex-col gap-2 mb-8 animate-fade-in-up">
+        <div className="flex flex-col gap-2 mb-8">
           <div className="flex items-center gap-2 text-primary">
             <ShieldCheck className="w-5 h-5" aria-hidden />
             <span className="text-sm font-body font-medium">Admin</span>
@@ -618,31 +237,17 @@ export function AdminPortal() {
           </h1>
           <p className="text-muted-foreground font-body max-w-2xl">
             Marketplace governance at a glance. Verify providers, monitor
-            bookings, triage disputes, moderate reports, and review feedback to
-            keep DFW Haul trusted across the metroplex.
+            bookings, and moderate reviews to keep DFW Haul trusted across the
+            metroplex.
           </p>
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
-            {Array.from({ length: 7 }).map((_, i) => (
-              <SkeletonCard
-                // biome-ignore lint/suspicious/noArrayIndexKey: static placeholder cards
-                key={i}
-                withMedia={false}
-              />
-            ))}
-          </div>
+          <LoadingSpinner label="Loading admin metrics" />
         ) : (
           <>
-            {/* Marketplace setup + email notifications — owner-only controls */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-10">
-              <MarketplaceSetup />
-              <EmailNotifications />
-            </div>
-
-            {/* Summary metrics — verification, bookings, reviews, disputes, reports, providers, customers */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-10">
+            {/* Summary metrics */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-10">
               <MetricCard
                 icon={ShieldCheck}
                 label="Pending verifications"
@@ -650,7 +255,6 @@ export function AdminPortal() {
                 hint="Providers awaiting review"
                 accent="warning"
                 dataOcid="admin.metric.pending_verifications"
-                stagger={1}
               />
               <MetricCard
                 icon={Package}
@@ -659,7 +263,6 @@ export function AdminPortal() {
                 hint="In-progress across marketplace"
                 accent="primary"
                 dataOcid="admin.metric.active_bookings"
-                stagger={2}
               />
               <MetricCard
                 icon={EyeOff}
@@ -668,25 +271,6 @@ export function AdminPortal() {
                 hint="Hidden / flagged for moderation"
                 accent="destructive"
                 dataOcid="admin.metric.reported_reviews"
-                stagger={3}
-              />
-              <MetricCard
-                icon={Scale}
-                label="Open disputes"
-                value={openDisputes}
-                hint="Awaiting triage or resolution"
-                accent="destructive"
-                dataOcid="admin.metric.open_disputes"
-                stagger={4}
-              />
-              <MetricCard
-                icon={ShieldAlert}
-                label="Open reports"
-                value={openReports}
-                hint="Community moderation queue"
-                accent="warning"
-                dataOcid="admin.metric.open_reports"
-                stagger={1}
               />
               <MetricCard
                 icon={Truck}
@@ -695,7 +279,6 @@ export function AdminPortal() {
                 hint="Across all categories"
                 accent="success"
                 dataOcid="admin.metric.total_providers"
-                stagger={2}
               />
               <MetricCard
                 icon={Users}
@@ -704,7 +287,6 @@ export function AdminPortal() {
                 hint="Registered marketplace users"
                 accent="primary"
                 dataOcid="admin.metric.total_customers"
-                stagger={3}
               />
             </div>
 
@@ -717,7 +299,7 @@ export function AdminPortal() {
                 Jump straight into the moderation workflows.
               </p>
             </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
               <QuickAction
                 to="/admin/providers"
                 icon={ShieldCheck}
@@ -725,7 +307,6 @@ export function AdminPortal() {
                 description="Review pending applications, approve, reject, or suspend."
                 badge={pendingVerifications}
                 dataOcid="admin.quick.providers"
-                stagger={1}
               />
               <QuickAction
                 to="/admin/bookings"
@@ -733,7 +314,6 @@ export function AdminPortal() {
                 title="Monitor bookings"
                 description="Search and filter every booking across the marketplace."
                 dataOcid="admin.quick.bookings"
-                stagger={2}
               />
               <QuickAction
                 to="/admin/reviews"
@@ -742,35 +322,6 @@ export function AdminPortal() {
                 description="Hide or restore reviews that violate community guidelines."
                 badge={reportedReviewsCount}
                 dataOcid="admin.quick.reviews"
-                stagger={3}
-              />
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-              <QuickAction
-                to="/admin/disputes"
-                icon={Scale}
-                title="Resolve disputes"
-                description="Triage booking disputes with AI suggestions and resolve or escalate."
-                badge={openDisputes}
-                dataOcid="admin.quick.disputes"
-                stagger={1}
-              />
-              <QuickAction
-                to="/admin/reports"
-                icon={Flag}
-                title="Moderate reports"
-                description="Review community reports and resolve or dismiss them."
-                badge={openReports}
-                dataOcid="admin.quick.reports"
-                stagger={2}
-              />
-              <QuickAction
-                to="/admin/docs"
-                icon={Sparkles}
-                title="Manage docs"
-                description="Author and publish help-center articles for customers and providers."
-                dataOcid="admin.quick.docs"
-                stagger={3}
               />
             </div>
 
@@ -779,7 +330,7 @@ export function AdminPortal() {
             totalCustomers === 0 &&
             activeBookings === 0 ? (
               <div className="mt-10">
-                <Card className="p-8 text-center shadow-subtle">
+                <Card className="p-8 text-center">
                   <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center mx-auto mb-4">
                     <Building2
                       className="w-6 h-6 text-muted-foreground"
@@ -791,8 +342,8 @@ export function AdminPortal() {
                   </h3>
                   <p className="text-sm text-muted-foreground font-body max-w-md mx-auto">
                     No marketplace activity yet. As providers register and
-                    customers book services, pending verifications, disputes,
-                    reports, and reviews will appear here for your review.
+                    customers book services, pending verifications and reviews
+                    will appear here for your review.
                   </p>
                 </Card>
               </div>

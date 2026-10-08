@@ -11,27 +11,6 @@ type _ImmutableObjectStorageCreateCertificateResult =
    blob_hash: text;
    method: text;
  };
-type VerificationTiers = 
- record {
-   background: VerificationTierRecord;
-   business: VerificationTierRecord;
-   identity: VerificationTierRecord;
-   insurance: VerificationTierRecord;
- };
-type VerificationTierStatus = 
- variant {
-   approved;
-   expired;
-   pending;
-   rejected;
-   unverified;
- };
-type VerificationTierRecord = 
- record {
-   note: opt text;
-   status: VerificationTierStatus;
-   verifiedAt: opt Timestamp;
- };
 type VerificationStatus = 
  variant {
    approved;
@@ -61,7 +40,6 @@ type UserInput =
    email: opt text;
    phone: opt text;
    role: MarketplaceRole;
-   workPhotos: vec ExternalBlob;
  };
 type UserId = principal;
 type User = 
@@ -74,23 +52,6 @@ type User =
    "principal": UserId;
    role: MarketplaceRole;
    updatedAt: Timestamp;
-   workPhotos: vec ExternalBlob;
- };
-type TrustScore = 
- record {
-   disputeHistory: nat;
-   longevity: nat;
-   overall: nat;
-   responsiveness: nat;
-   reviews: nat;
-   updatedAt: Timestamp;
-   verification: nat;
- };
-type Tone = 
- variant {
-   concise;
-   friendly;
-   professional;
  };
 type Timestamp = int;
 type SlotStatus = 
@@ -131,25 +92,6 @@ type ServiceCategory =
    relocation;
    trashHaul;
  };
-type SeedResult = 
- record {
-   listingOutcomes: vec SeedListingOutcome;
-   providerCreated: bool;
-   providerId: nat;
- };
-type SeedListingOutcome = 
- record {
-   category: variant {
-               boxTruck;
-               moving;
-               relocation;
-               trashHaul;
-             };
-   outcome: variant {
-              created;
-              skipped;
-            };
- };
 type SearchResult = 
  record {
    listing: ServiceListing;
@@ -163,38 +105,6 @@ type SearchFilters =
    maxPriceCents: opt nat;
    minRating: opt nat;
    serviceArea: opt text;
- };
-type RewardTier = 
- variant {
-   bronze;
-   gold;
-   platinum;
-   silver;
- };
-type RewardProfile = 
- record {
-   badges: vec text;
-   points: nat;
-   referralCode: text;
-   streak: nat;
-   tier: RewardTier;
-   updatedAt: Timestamp;
-   userId: UserId;
- };
-type RewardLedgerEntry = 
- record {
-   id: nat;
-   points: nat;
-   reason: text;
-   timestamp: Timestamp;
-   userId: UserId;
- };
-type ReviewSummary = 
- record {
-   providerId: nat;
-   sentiment: text;
-   summary: text;
-   themes: vec text;
  };
 type ReviewInput = 
  record {
@@ -225,47 +135,6 @@ type Result =
    hasMore: bool;
    rows: vec vec Cell;
  };
-type ReportTargetType = 
- variant {
-   listing;
-   provider;
-   review;
-   user;
- };
-type ReportStatus = 
- variant {
-   dismissed;
-   open;
-   resolved;
-   reviewing;
- };
-type ReferralStatus = 
- variant {
-   awarded;
-   expired;
-   pending;
- };
-type Referral = 
- record {
-   awardedAt: opt Timestamp;
-   createdAt: Timestamp;
-   id: nat;
-   referee: UserId;
-   referrer: UserId;
-   status: ReferralStatus;
- };
-type ProviderMatch = 
- record {
-   providerId: nat;
-   rationale: text;
-   score: nat;
- };
-type ProviderInsights = 
- record {
-   insights: text;
-   providerId: nat;
-   recommendations: vec text;
- };
 type ProviderInput = 
  record {
    companyName: text;
@@ -290,33 +159,6 @@ type Provider =
    verificationNote: opt text;
    verificationStatus: VerificationStatus;
  };
-type MicrositeInput = 
- record {
-   aboutCopy: text;
-   accentColor: opt text;
-   blockOrder: vec text;
-   coverImage: opt blob;
-   heroCopy: text;
-   published: bool;
-   servicesCopy: text;
-   slug: text;
- };
-type Microsite = 
- record {
-   aboutCopy: text;
-   accentColor: opt text;
-   blockOrder: vec text;
-   coverImage: opt blob;
-   createdAt: Timestamp;
-   generatedAt: opt Timestamp;
-   heroCopy: text;
-   id: nat;
-   providerId: nat;
-   published: bool;
-   servicesCopy: text;
-   slug: text;
-   updatedAt: Timestamp;
- };
 type MessageInput = 
  record {
    bookingId: nat;
@@ -331,17 +173,26 @@ type Message =
    sender: UserId;
    sentAt: Timestamp;
  };
-type MatchProvidersInput = 
- record {
-   category: opt text;
-   need: text;
-   serviceArea: opt text;
- };
 type MarketplaceRole = 
  variant {
    admin;
    customer;
    provider;
+ };
+type IdentitySource = 
+ variant {
+   email;
+   google;
+   internetIdentity;
+ };
+type IdentityAttributes = 
+ record {
+   displayName: opt text;
+   email: opt text;
+   firstSeenAt: nat;
+   lastSeenAt: nat;
+   "principal": AuthId;
+   source: IdentitySource;
  };
 type ExternalBlob = blob;
 type Error = 
@@ -365,82 +216,6 @@ type Error =
    Stale: record {ageNs: nat;};
    UnknownNonce;
    UntrustedSsoSource: record {domain: text;};
- };
-type DocStatus = 
- variant {
-   draft;
-   published;
- };
-type DocInput = 
- record {
-   category: text;
-   content: text;
-   slug: text;
-   status: DocStatus;
-   title: text;
- };
-type Doc = 
- record {
-   author: UserId;
-   category: text;
-   content: text;
-   createdAt: Timestamp;
-   id: nat;
-   readingTime: nat;
-   slug: text;
-   status: DocStatus;
-   title: text;
-   updatedAt: Timestamp;
- };
-type DisputeTriage = 
- record {
-   disputeId: nat;
-   rationale: text;
-   severity: text;
-   suggestedResolution: text;
- };
-type DisputeStatus = 
- variant {
-   escalated;
-   open;
-   resolved;
-   responded;
- };
-type DisputeInput = 
- record {
-   bookingId: nat;
-   reason: text;
- };
-type Dispute = 
- record {
-   adminResolution: opt text;
-   aiTriageSuggestion: opt text;
-   bookingId: nat;
-   createdAt: Timestamp;
-   id: nat;
-   openedBy: UserId;
-   providerResponse: opt text;
-   reason: text;
-   status: DisputeStatus;
-   updatedAt: Timestamp;
- };
-type CommunityReportInput = 
- record {
-   reason: text;
-   targetId: text;
-   targetType: ReportTargetType;
- };
-type CommunityReport = 
- record {
-   createdAt: Timestamp;
-   id: nat;
-   reason: text;
-   reporter: UserId;
-   resolutionNote: opt text;
-   status: ReportStatus;
-   targetId: text;
-   targetType: ReportTargetType;
-   updatedAt: Timestamp;
  };
 type Cell = 
  record {
@@ -497,60 +272,22 @@ type AvailabilitySlot =
    status: SlotStatus;
    time: opt text;
  };
-type AssistantRole = 
- variant {
-   assistant;
-   user;
- };
-type AssistantMessage = 
- record {
-   content: text;
-   context: opt text;
-   role: AssistantRole;
-   timestamp: Timestamp;
- };
-type AssistantInput = 
- record {
-   context: opt text;
-   message: text;
- };
-type AISearchResult = 
- record {
-   listingId: nat;
-   providerId: nat;
-   rationale: text;
-   score: nat;
- };
+type AuthId = principal;
 service : {
   __accessControlState: () -> (reserved) query;
-  __assistantSessions: () -> (reserved) query;
   __bookings: () -> (reserved) query;
-  __communityReports: () -> (reserved) query;
-  __disputes: () -> (reserved) query;
-  __docs: () -> (reserved) query;
-  __emailNotificationsEnabled: () -> (reserved) query;
+  __identities: () -> (reserved) query;
   __listings: () -> (reserved) query;
   __messages: () -> (reserved) query;
-  __microsites: () -> (reserved) query;
   __nextBookingId: () -> (reserved) query;
-  __nextDisputeId: () -> (reserved) query;
-  __nextDocId: () -> (reserved) query;
   __nextListingId: () -> (reserved) query;
   __nextMessageId: () -> (reserved) query;
-  __nextMicrositeId: () -> (reserved) query;
   __nextProviderId: () -> (reserved) query;
-  __nextReferralId: () -> (reserved) query;
-  __nextReportId: () -> (reserved) query;
   __nextReviewId: () -> (reserved) query;
-  __nextRewardLedgerId: () -> (reserved) query;
   __nextSlotId: () -> (reserved) query;
   __openAIApiKey: () -> (reserved) query;
-  __providerVerifications: () -> (reserved) query;
   __providers: () -> (reserved) query;
-  __referrals: () -> (reserved) query;
   __reviews: () -> (reserved) query;
-  __rewardLedger: () -> (reserved) query;
-  __rewards: () -> (reserved) query;
   __slots: () -> (reserved) query;
   __users: () -> (reserved) query;
   _immutableObjectStorageBlobsAreLive: (hashes: vec blob) -> (vec bool) query;
@@ -566,74 +303,40 @@ service : {
   _internet_identity_sign_in_finish: () -> (Result__1);
   _internet_identity_sign_in_start: () -> (blob);
   acceptBooking: (bookingId: nat) -> (Booking);
-  aiAssistant: (input: AssistantInput) -> (AssistantMessage);
-  aiSearch: (searchQuery: text) -> (vec AISearchResult);
-  analyzeImageDescription: (image: ExternalBlob) -> (text);
-  analyzeImageSafety: (image: ExternalBlob) -> (text);
-  analyzeImageWork: (image: ExternalBlob) -> (text);
-  applyReferral: (referralCode: text) -> (Referral);
   approveProvider: (providerId: nat) -> (Provider);
   assignCallerUserRole: (user: principal, role: UserRole) -> ();
-  awardPoints: (userId: UserId, points: nat, reason: text) ->
-   (RewardLedgerEntry);
   blockAvailabilitySlot: (slotId: nat) -> (AvailabilitySlot);
   cancelBooking: (bookingId: nat) -> (Booking);
   checkAvailability: (providerId: nat, date: text, time: opt text) ->
    (bool) query;
   completeBooking: (bookingId: nat) -> (Booking);
   createBooking: (input: BookingInput) -> (Booking);
-  createDoc: (input: DocInput) -> (Doc);
   createListing: (input: ServiceListingInput) -> (ServiceListing);
   createReview: (input: ReviewInput) -> (Review);
   declineBooking: (bookingId: nat) -> (Booking);
   deleteListing: (listingId: nat) -> ();
-  escalateDispute: (disputeId: nat) -> (Dispute);
   execute: (qJson: text) -> (Result) query;
-  generateBio: (profileInfo: text, tone: opt Tone) -> (text);
-  generateBookingMessage: (bookingContext: text) -> (text);
-  generateCompanyDescription: (companyInfo: text, tone: opt Tone) -> (text);
-  generateListingDescription: (bulletPoints: text, category:
-   opt ServiceCategory, tone: opt Tone) -> (text);
-  generateMicrosite: (providerId: nat) -> (Microsite);
-  generatePromotionalContent: (offerDetails: text, category:
-   opt ServiceCategory, tone: opt Tone) -> (text);
-  generateProviderInsights: (providerId: nat) -> (ProviderInsights);
-  generateReviewDraft: (bookingId: nat, rating: nat, extraNotes: opt text) ->
-   (text);
-  generateReviewSummary: (providerId: nat) -> (ReviewSummary);
-  generateTitleAndTagline: (keywords: text, category: opt ServiceCategory) ->
-   (vec text);
+  generateListingDescription: (bulletPoints: text) -> (text);
+  generatePromotionalContent: (offerDetails: text) -> (text);
+  generateTitleAndTagline: (keywords: text) -> (vec text);
   getBooking: (bookingId: nat) -> (opt Booking) query;
   getCallerUserRole: () -> (UserRole) query;
-  getDoc: (docId: nat) -> (opt Doc) query;
-  getDocBySlug: (slug: text) -> (opt Doc) query;
-  getEmailSettings: () -> (record {emailNotificationsEnabled: bool;}) query;
-  getLeaderboard: (limit: nat) -> (vec RewardProfile) query;
   getListing: (listingId: nat) -> (opt ServiceListing) query;
-  getMicrosite: (micrositeId: nat) -> (opt Microsite) query;
-  getMicrositeBySlug: (slug: text) -> (opt Microsite) query;
   getMyBooking: (bookingId: nat) -> (opt Booking) query;
+  getMyDisplayName: () -> (opt text) query;
+  getMyEmail: () -> (opt text) query;
+  getMyIdentity: () -> (opt IdentityAttributes) query;
+  getMyIdentitySource: () -> (opt IdentitySource) query;
   getMyProvider: () -> (opt Provider) query;
-  getMyReferralCode: () -> (text) query;
-  getMyRewards: () -> (opt RewardProfile) query;
   getMyUser: () -> (opt User) query;
   getProvider: (providerId: nat) -> (opt Provider) query;
   getReview: (reviewId: nat) -> (opt Review) query;
-  getRewardLedger: (userId: UserId) -> (vec RewardLedgerEntry) query;
-  getRewardsByUser: (userId: UserId) -> (opt RewardProfile) query;
   getThread: (bookingId: nat) -> (vec Message) query;
-  getTrustScore: (providerId: nat) -> (TrustScore) query;
   getUnreadMessageCount: (bookingId: nat) -> (nat) query;
   getUser: (userId: UserId) -> (opt User) query;
-  getVerification: (providerId: nat) -> (VerificationTiers) query;
   isCallerAdmin: () -> (bool) query;
   isOpenAIConfigured: () -> (bool) query;
-  isOwnerSeeded: () -> (bool) query;
   listAvailabilitySlots: (providerId: nat) -> (vec AvailabilitySlot) query;
-  listDisputes: () -> (vec Dispute) query;
-  listDisputesByBooking: (bookingId: nat) -> (vec Dispute) query;
-  listDocs: () -> (vec Doc) query;
-  listDocsByCategory: (category: text) -> (vec Doc) query;
   listListingsByCategory: (category: ServiceCategory) ->
    (vec ServiceListing) query;
   listListingsByProvider: (providerId: nat) -> (vec ServiceListing) query;
@@ -642,51 +345,28 @@ service : {
   listProviders: () -> (vec Provider) query;
   listProvidersByCategory: (category: ServiceCategory) ->
    (vec Provider) query;
-  listReports: () -> (vec CommunityReport) query;
   listReviewsByBooking: (bookingId: nat) -> (vec Review) query;
   listReviewsByProvider: (providerId: nat) -> (vec Review) query;
   listUsers: () -> (vec User) query;
   markThreadRead: (bookingId: nat) -> ();
-  matchProviders: (input: MatchProvidersInput) -> (vec ProviderMatch);
   moderateReview: (reviewId: nat, action: variant {
                                             hide;
                                             restore;
                                           }) -> (Review);
-  openDispute: (input: DisputeInput) -> (Dispute);
-  publishDoc: (docId: nat, status: DocStatus) -> (Doc);
-  publishMicrosite: (micrositeId: nat, published: bool) -> (Microsite);
   registerProvider: (input: ProviderInput) -> (Provider);
   reinstateProvider: (providerId: nat) -> (Provider);
   rejectProvider: (providerId: nat, note: text) -> (Provider);
-  reportTarget: (input: CommunityReportInput) -> (CommunityReport);
-  resolveDispute: (disputeId: nat, resolution: text) -> (Dispute);
-  resolveReport: (reportId: nat, resolutionNote: text, dismiss: bool) ->
-   (CommunityReport);
-  respondToDispute: (disputeId: nat, response: text) -> (Dispute);
   respondToReview: (reviewId: nat, response: text) -> (Review);
   scheduleBooking: (bookingId: nat) -> (Booking);
   schema: () -> (text) query;
   searchProviders: (filters: SearchFilters) -> (vec SearchResult) query;
-  seedOwnerServices: () -> (SeedResult);
   sendMessage: (input: MessageInput) -> (Message);
   setAvailabilitySlot: (input: AvailabilitySlotInput) -> (AvailabilitySlot);
-  setEmailNotificationsEnabled: (enabled: bool) -> ();
   setOpenAIApiKey: (key: text) -> ();
   startBooking: (bookingId: nat) -> (Booking);
-  suggestReply: (bookingId: nat, conversationContext: opt text) -> (text);
   suspendProvider: (providerId: nat, note: text) -> (Provider);
-  triageDispute: (disputeId: nat) -> (DisputeTriage);
-  updateDoc: (docId: nat, input: DocInput) -> (Doc);
   updateListing: (listingId: nat, input: ServiceListingInput) ->
    (ServiceListing);
   updateMyProvider: (input: ProviderInput) -> (Provider);
-  updateVerificationTier: (providerId: nat, tier:
-   variant {
-     background;
-     business;
-     identity;
-     insurance;
-   }, status: VerificationTierStatus, note: opt text) -> (VerificationTiers);
-  upsertMyMicrosite: (input: MicrositeInput) -> (Microsite);
   upsertMyUser: (input: UserInput) -> (User);
 }

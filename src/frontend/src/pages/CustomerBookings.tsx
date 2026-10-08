@@ -1,12 +1,10 @@
 // CustomerBookings — booking dashboard for the signed-in customer.
 // Lists bookings from useListMyBookings with status filter tabs, status badges,
-// cancel (before accepted), leave review (after completed), open dispute
-// (in-progress/completed), SLA indicators, skeleton loading, and motion.
+// cancel (before accepted), leave review (after completed), and a link to messages.
 
 import { BookingStatusBadge } from "@/components/BookingStatusBadge";
-import { DisputeStatusBadge } from "@/components/DisputeStatusBadge";
 import { EmptyState } from "@/components/EmptyState";
-import { SkeletonCard } from "@/components/Skeleton";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { StarRating } from "@/components/StarRating";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,35 +23,26 @@ import { useAuth } from "@/contexts/AuthContext";
 import {
   useCancelBooking,
   useCreateReview,
-  useGenerateReviewDraft,
   useGetProvider,
-  useListDisputesByBooking,
   useListMyBookings,
   useListReviewsByBooking,
-  useOpenDispute,
 } from "@/hooks/useQueries";
 import {
   BOOKING_STATUS_LABELS,
   type Booking,
   type BookingStatus,
   CATEGORY_LABELS,
-  type DisputeInput,
   type ReviewInput,
 } from "@/types";
 import { Link, useNavigate } from "@tanstack/react-router";
 import {
-  AlertTriangle,
   CalendarDays,
   Clock,
-  Loader2,
   MapPin,
   MessageSquare,
   Package,
-  ShieldCheck,
   Star,
-  Timer,
   Trash2,
-  Wand2,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -73,15 +62,6 @@ const ACTIVE_STATUSES: BookingStatus[] = [
   "scheduled",
   "inProgress",
 ];
-
-// SLA thresholds (hours) per status — surfaced as on-track / at-risk / breached
-// indicators. The customer sees a compact SLA chip on each booking card.
-const SLA_THRESHOLDS: Partial<Record<BookingStatus, number>> = {
-  requested: 24, // provider should accept within 24h
-  accepted: 48, // provider should schedule within 48h
-  scheduled: 0, // waiting on the scheduled date — no SLA clock
-  inProgress: 72, // provider should complete within 72h of start
-};
 
 function formatDate(date: string): string {
   if (!date) return "—";
@@ -105,116 +85,24 @@ function formatTime(time: string): string {
   });
 }
 
-// Compute SLA state from the booking's updatedAt and its status threshold.
-// Returns null when there is no SLA clock for the current status.
-function computeSla(
-  status: BookingStatus,
-  updatedAt: bigint,
-): {
-  label: string;
-  state: "onTrack" | "atRisk" | "breached" | "neutral";
-  hoursRemaining: number;
-} | null {
-  const thresholdHours = SLA_THRESHOLDS[status];
-  if (thresholdHours === undefined || thresholdHours === 0) return null;
-  const updatedMs = Number(updatedAt) / 1_000_000;
-  const elapsedHours = (Date.now() - updatedMs) / 3_600_000;
-  const hoursRemaining = thresholdHours - elapsedHours;
-  if (hoursRemaining <= 0) {
-    return {
-      label: "SLA breached",
-      state: "breached",
-      hoursRemaining: Math.round(hoursRemaining),
-    };
-  }
-  if (hoursRemaining <= thresholdHours * 0.25) {
-    return {
-      label: "SLA at risk",
-      state: "atRisk",
-      hoursRemaining: Math.round(hoursRemaining),
-    };
-  }
-  return {
-    label: "On track",
-    state: "onTrack",
-    hoursRemaining: Math.round(hoursRemaining),
-  };
-}
-
-const SLA_STYLES: Record<
-  "onTrack" | "atRisk" | "breached" | "neutral",
-  { token: string; icon: typeof Timer }
-> = {
-  onTrack: {
-    token: "border-success/40 bg-success/10 text-success-foreground",
-    icon: ShieldCheck,
-  },
-  atRisk: {
-    token: "border-warning/40 bg-warning/15 text-warning-foreground",
-    icon: Timer,
-  },
-  breached: {
-    token: "border-destructive/40 bg-destructive/15 text-destructive",
-    icon: AlertTriangle,
-  },
-  neutral: {
-    token: "border-border bg-secondary text-muted-foreground",
-    icon: Clock,
-  },
-};
-
-function SlaIndicator({
-  status,
-  updatedAt,
-}: { status: BookingStatus; updatedAt: bigint }) {
-  const sla = computeSla(status, updatedAt);
-  if (!sla) return null;
-  const style = SLA_STYLES[sla.state];
-  const Icon = style.icon;
-  return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[0.6875rem] font-body font-medium ${style.token}`}
-      title={`SLA: ${sla.label}${
-        sla.hoursRemaining >= 0
-          ? ` · ${sla.hoursRemaining}h remaining`
-          : ` · ${Math.abs(sla.hoursRemaining)}h overdue`
-      }`}
-      data-ocid="customer_bookings.sla"
-    >
-      <Icon className="w-3 h-3" aria-hidden />
-      {sla.label}
-    </span>
-  );
-}
-
 // Booking row with provider name resolved via a small provider lookup hook.
 function BookingRow({
   booking,
   index,
   onReview,
-  onDispute,
 }: {
   booking: Booking;
   index: number;
   onReview: (booking: Booking) => void;
-  onDispute: (booking: Booking) => void;
 }) {
   const { data: provider } = useGetProvider(booking.providerId);
   const { data: existingReviews } = useListReviewsByBooking(booking.id);
-  const { data: existingDisputes } = useListDisputesByBooking(booking.id);
   const cancelBooking = useCancelBooking();
   const navigate = useNavigate();
 
   const canCancel = booking.status === "requested";
   const canReview = booking.status === "completed";
   const alreadyReviewed = canReview && (existingReviews?.length ?? 0) > 0;
-  // Dispute is available for in-progress and completed bookings, but only if
-  // there is no open/responded/escalated dispute already on this booking.
-  const canDispute =
-    booking.status === "inProgress" || booking.status === "completed";
-  const hasOpenDispute = (existingDisputes ?? []).some(
-    (d) => d.status !== "resolved",
-  );
 
   const handleCancel = () => {
     cancelBooking.mutate(booking.id, {
@@ -227,10 +115,7 @@ function BookingRow({
   };
 
   return (
-    <Card
-      className="py-0 animate-card-hover-lift animate-fade-in-up shadow-subtle"
-      data-ocid={`customer_bookings.item.${index + 1}`}
-    >
+    <Card className="py-0" data-ocid={`customer_bookings.item.${index + 1}`}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
@@ -241,13 +126,7 @@ function BookingRow({
               {CATEGORY_LABELS[booking.category]}
             </p>
           </div>
-          <div className="flex flex-col items-end gap-1.5 shrink-0">
-            <BookingStatusBadge status={booking.status} />
-            <SlaIndicator
-              status={booking.status}
-              updatedAt={booking.updatedAt}
-            />
-          </div>
+          <BookingStatusBadge status={booking.status} />
         </div>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
@@ -276,25 +155,6 @@ function BookingRow({
           </p>
         ) : null}
 
-        {/* Existing dispute badge, if any */}
-        {hasOpenDispute ? (
-          <div className="flex items-center gap-2 rounded-md border border-border bg-secondary/60 px-3 py-2">
-            <AlertTriangle
-              className="w-4 h-4 text-warning-foreground"
-              aria-hidden
-            />
-            <span className="text-xs font-body text-muted-foreground">
-              Dispute open on this booking
-            </span>
-            {existingDisputes && existingDisputes.length > 0 ? (
-              <DisputeStatusBadge
-                status={existingDisputes[0].status}
-                className="ml-auto"
-              />
-            ) : null}
-          </div>
-        ) : null}
-
         <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-border">
           <Button
             size="sm"
@@ -316,18 +176,6 @@ function BookingRow({
             >
               <Trash2 className="w-4 h-4" aria-hidden />
               {cancelBooking.isPending ? "Cancelling…" : "Cancel"}
-            </Button>
-          ) : null}
-          {canDispute && !hasOpenDispute ? (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => onDispute(booking)}
-              className="text-warning-foreground border-warning/40 hover:bg-warning/10"
-              data-ocid={`customer_bookings.dispute.${index + 1}`}
-            >
-              <AlertTriangle className="w-4 h-4" aria-hidden />
-              Open dispute
             </Button>
           ) : null}
           {canReview && !alreadyReviewed ? (
@@ -359,21 +207,11 @@ export function CustomerBookings() {
   const { isAuthenticated, login } = useAuth();
   const { data: bookings, isLoading } = useListMyBookings();
   const createReview = useCreateReview();
-  const generateReviewDraft = useGenerateReviewDraft();
-  const openDispute = useOpenDispute();
 
   const [tab, setTab] = useState<FilterTab>("all");
   const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
-  const [disputeBooking, setDisputeBooking] = useState<Booking | null>(null);
   const [rating, setRating] = useState(5);
   const [reviewText, setReviewText] = useState("");
-  const [disputeReason, setDisputeReason] = useState("");
-
-  // Resolve provider for the booking currently in the review dialog so we can
-  // build rich booking-details context for the AI review draft generator.
-  const { data: reviewProvider } = useGetProvider(
-    reviewBooking?.providerId ?? "",
-  );
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -402,11 +240,6 @@ export function CustomerBookings() {
     setReviewText("");
   };
 
-  const openDisputeDialog = (booking: Booking) => {
-    setDisputeBooking(booking);
-    setDisputeReason("");
-  };
-
   const handleSubmitReview = (e: React.FormEvent) => {
     e.preventDefault();
     if (!reviewBooking) return;
@@ -431,65 +264,6 @@ export function CustomerBookings() {
     });
   };
 
-  const handleSubmitDispute = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!disputeBooking) return;
-    if (!disputeReason.trim()) {
-      toast.error("Please describe the issue you're reporting.");
-      return;
-    }
-    const input: DisputeInput = {
-      bookingId: disputeBooking.id,
-      reason: disputeReason.trim(),
-    };
-    openDispute.mutate(input, {
-      onSuccess: () => {
-        toast.success(
-          "Dispute opened. The provider and our team have been notified.",
-        );
-        setDisputeBooking(null);
-      },
-      onError: (err) =>
-        toast.error(
-          err instanceof Error ? err.message : "Could not open dispute.",
-        ),
-    });
-  };
-
-  const handleGenerateReviewDraft = () => {
-    if (!reviewBooking) return;
-    const providerName = reviewProvider?.companyName ?? "the provider";
-    const categoryLabel = CATEGORY_LABELS[reviewBooking.category] ?? "service";
-    const details = [
-      `Provider: ${providerName}`,
-      `Service: ${categoryLabel}`,
-      `Scheduled: ${formatDate(reviewBooking.scheduledDate)} at ${formatTime(reviewBooking.scheduledTime)}`,
-      `Address: ${reviewBooking.address}`,
-      reviewBooking.jobDetails
-        ? `Job details: ${reviewBooking.jobDetails}`
-        : null,
-      `Rating: ${rating} out of 5`,
-    ]
-      .filter((line): line is string => Boolean(line))
-      .join("\n");
-
-    generateReviewDraft.mutate(
-      { bookingId: reviewBooking.id, rating, extraNotes: details },
-      {
-        onSuccess: (draft) => {
-          setReviewText(draft);
-          toast.success("Review draft generated — edit as you like.");
-        },
-        onError: (err) =>
-          toast.error(
-            err instanceof Error
-              ? err.message
-              : "Could not generate a review draft.",
-          ),
-      },
-    );
-  };
-
   if (!isAuthenticated) {
     return (
       <div
@@ -501,7 +275,10 @@ export function CustomerBookings() {
           title="Sign in to view your bookings"
           description="Track requests, message providers, and leave reviews once you're signed in."
           action={
-            <Button onClick={login} data-ocid="customer_bookings.signin">
+            <Button
+              onClick={() => login()}
+              data-ocid="customer_bookings.signin"
+            >
               Sign in
             </Button>
           }
@@ -512,11 +289,11 @@ export function CustomerBookings() {
 
   return (
     <div
-      className="bg-background min-h-screen animate-page-transition"
+      className="bg-background min-h-screen"
       data-ocid="page.customer_bookings"
     >
       <section
-        className="bg-card border-b border-border shadow-subtle"
+        className="bg-card border-b border-border"
         data-ocid="customer_bookings.header"
       >
         <div className="container mx-auto px-4 lg:px-6 py-8">
@@ -524,8 +301,8 @@ export function CustomerBookings() {
             My bookings
           </h1>
           <p className="text-sm text-muted-foreground font-body">
-            Track your service requests, message providers, leave reviews, and
-            open disputes if something goes wrong.
+            Track your service requests, message providers, and leave reviews
+            after completion.
           </p>
         </div>
       </section>
@@ -553,14 +330,7 @@ export function CustomerBookings() {
         </Tabs>
 
         {isLoading ? (
-          <div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
-            data-ocid="customer_bookings.loading_state"
-          >
-            <SkeletonCard withMedia={false} />
-            <SkeletonCard withMedia={false} />
-            <SkeletonCard withMedia={false} />
-          </div>
+          <LoadingSpinner label="Loading bookings" />
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={Package}
@@ -587,7 +357,6 @@ export function CustomerBookings() {
                 booking={booking}
                 index={i}
                 onReview={openReview}
-                onDispute={openDisputeDialog}
               />
             ))}
           </div>
@@ -622,25 +391,7 @@ export function CustomerBookings() {
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <div className="flex items-center justify-between gap-2">
-                <Label htmlFor="review-text">Your review</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleGenerateReviewDraft}
-                  disabled={generateReviewDraft.isPending || !reviewBooking}
-                  className="text-primary border-primary/30 hover:bg-primary/10"
-                  data-ocid="customer_bookings.review_generate_ai"
-                >
-                  {generateReviewDraft.isPending ? (
-                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-                  ) : (
-                    <Wand2 className="w-4 h-4" aria-hidden />
-                  )}
-                  Generate Review with AI
-                </Button>
-              </div>
+              <Label htmlFor="review-text">Your review</Label>
               <Textarea
                 id="review-text"
                 placeholder="Tell others about the service, punctuality, and care."
@@ -667,69 +418,6 @@ export function CustomerBookings() {
                 data-ocid="customer_bookings.review_submit"
               >
                 {createReview.isPending ? "Submitting…" : "Post review"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dispute dialog */}
-      <Dialog
-        open={!!disputeBooking}
-        onOpenChange={(open) => !open && setDisputeBooking(null)}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Open a dispute</DialogTitle>
-            <DialogDescription>
-              Describe the issue with this booking. The provider and our
-              moderation team will be notified, and our AI will triage severity.
-            </DialogDescription>
-          </DialogHeader>
-          <form
-            onSubmit={handleSubmitDispute}
-            className="flex flex-col gap-4"
-            data-ocid="customer_bookings.dispute_form"
-          >
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="dispute-reason">What went wrong?</Label>
-              <Textarea
-                id="dispute-reason"
-                placeholder="Describe the issue — missed appointment, incomplete work, damage, etc."
-                value={disputeReason}
-                onChange={(e) => setDisputeReason(e.target.value)}
-                rows={5}
-                required
-                data-ocid="customer_bookings.dispute_reason"
-              />
-            </div>
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setDisputeBooking(null)}
-                disabled={openDispute.isPending}
-                data-ocid="customer_bookings.dispute_cancel"
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={openDispute.isPending}
-                className="bg-warning hover:bg-warning/90 text-warning-foreground"
-                data-ocid="customer_bookings.dispute_submit"
-              >
-                {openDispute.isPending ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-                    Opening…
-                  </>
-                ) : (
-                  <>
-                    <AlertTriangle className="w-4 h-4" aria-hidden />
-                    Open dispute
-                  </>
-                )}
               </Button>
             </DialogFooter>
           </form>

@@ -2,39 +2,31 @@
 // Header navigation adapts to the authenticated user's role (customer/provider/admin).
 
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/contexts/AuthContext";
 import { useGetMyUser } from "@/hooks/useQueries";
 import { cn } from "@/lib/utils";
 import type { MarketplaceRole } from "@/types";
-import { useInternetIdentity } from "@caffeineai/core-infrastructure";
 import { Link, Outlet, useLocation } from "@tanstack/react-router";
 import {
-  BookOpen,
-  Building2,
-  Globe,
   LayoutDashboard,
   Loader2,
   LogOut,
-  Mail,
   Menu,
   Package,
   ShieldCheck,
-  Sparkles,
-  Trophy,
   Truck,
   User as UserIcon,
   X,
 } from "lucide-react";
-import { useEffect, useState } from "react";
-import { AIAssistantPanel } from "./AIAssistantPanel";
+import { useState } from "react";
 import { Footer } from "./Footer";
+import { SignInModal } from "./SignInModal";
 
 interface NavItem {
   label: string;
   to: string;
   icon: typeof Truck;
   ocid: string;
-  /** Visually emphasize this item (e.g. AI Tools) per "AI is first-class". */
-  prominent?: boolean;
 }
 
 const customerNav: NavItem[] = [
@@ -51,18 +43,6 @@ const customerNav: NavItem[] = [
     icon: UserIcon,
     ocid: "nav.messages",
   },
-  {
-    label: "Rewards",
-    to: "/customer/rewards",
-    icon: Trophy,
-    ocid: "nav.rewards",
-  },
-  {
-    label: "Docs",
-    to: "/docs",
-    icon: BookOpen,
-    ocid: "nav.docs",
-  },
 ];
 
 const providerNav: NavItem[] = [
@@ -71,13 +51,6 @@ const providerNav: NavItem[] = [
     to: "/provider/dashboard",
     icon: LayoutDashboard,
     ocid: "nav.dashboard",
-  },
-  {
-    label: "AI Tools",
-    to: "/provider/ai-tools",
-    icon: Sparkles,
-    ocid: "nav.ai_tools",
-    prominent: true,
   },
   {
     label: "Listings",
@@ -91,18 +64,6 @@ const providerNav: NavItem[] = [
     icon: Truck,
     ocid: "nav.provider_bookings",
   },
-  {
-    label: "Business Hub",
-    to: "/provider/business",
-    icon: Building2,
-    ocid: "nav.business_hub",
-  },
-  {
-    label: "My Website",
-    to: "/provider/microsite",
-    icon: Globe,
-    ocid: "nav.microsite",
-  },
 ];
 
 const adminNav: NavItem[] = [
@@ -111,30 +72,6 @@ const adminNav: NavItem[] = [
     to: "/admin",
     icon: ShieldCheck,
     ocid: "nav.admin",
-  },
-  {
-    label: "Disputes",
-    to: "/admin/disputes",
-    icon: ShieldCheck,
-    ocid: "nav.disputes",
-  },
-  {
-    label: "Reports",
-    to: "/admin/reports",
-    icon: BookOpen,
-    ocid: "nav.reports",
-  },
-  {
-    label: "Docs",
-    to: "/admin/docs",
-    icon: BookOpen,
-    ocid: "nav.admin_docs",
-  },
-  {
-    label: "Email Settings",
-    to: "/admin#email-settings",
-    icon: Mail,
-    ocid: "nav.email_settings",
   },
 ];
 
@@ -145,34 +82,29 @@ function navForRole(role: MarketplaceRole | null): NavItem[] {
 }
 
 export function Layout() {
-  const { isAuthenticated, isLoggingIn, login, clear } = useInternetIdentity();
+  const {
+    isAuthenticated,
+    isLoggingIn,
+    logout,
+    openSignInModal,
+    closeSignInModal,
+    isSignInModalOpen,
+    signInWithGoogle,
+    signInWithEmail,
+  } = useAuth();
   const { data: user } = useGetMyUser();
   const location = useLocation();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [aiPanelOpen, setAiPanelOpen] = useState(false);
 
   const role = user?.role ?? null;
   const navItems = navForRole(role);
 
-  // Workshop OKLCH design system: provider/admin portals render in dark theme
-  // via the .dark class on <html>. Customer-facing and unauthenticated views
-  // stay light. Watches the role and toggles the class accordingly.
-  useEffect(() => {
-    const isDark = role === "provider" || role === "admin";
-    const root = document.documentElement;
-    if (isDark) {
-      root.classList.add("dark");
-    } else {
-      root.classList.remove("dark");
-    }
-  }, [role]);
-
   const handleLogin = () => {
-    login();
+    openSignInModal();
   };
 
   const handleLogout = () => {
-    clear();
+    logout();
     setMobileOpen(false);
   };
 
@@ -218,18 +150,11 @@ export function Layout() {
                         "flex items-center gap-2 px-3 py-2 rounded-md text-sm font-body font-medium transition-smooth",
                         isActive(item.to)
                           ? "bg-primary/10 text-primary"
-                          : item.prominent
-                            ? "text-primary bg-primary/5 hover:bg-primary/10 ring-1 ring-primary/20"
-                            : "text-muted-foreground hover:text-foreground hover:bg-secondary",
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary",
                       )}
                     >
                       <Icon className="w-4 h-4" aria-hidden />
                       {item.label}
-                      {item.prominent ? (
-                        <span className="ml-0.5 inline-flex items-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide leading-none text-primary-foreground">
-                          AI
-                        </span>
-                      ) : null}
                     </Link>
                   );
                 })}
@@ -316,18 +241,11 @@ export function Layout() {
                         "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-body font-medium transition-smooth",
                         isActive(item.to)
                           ? "bg-primary/10 text-primary"
-                          : item.prominent
-                            ? "text-primary bg-primary/5 hover:bg-primary/10 ring-1 ring-primary/20"
-                            : "text-muted-foreground hover:text-foreground hover:bg-secondary",
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary",
                       )}
                     >
                       <Icon className="w-4 h-4" aria-hidden />
                       {item.label}
-                      {item.prominent ? (
-                        <span className="ml-0.5 inline-flex items-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide leading-none text-primary-foreground">
-                          AI
-                        </span>
-                      ) : null}
                     </Link>
                   );
                 })}
@@ -368,7 +286,7 @@ export function Layout() {
                     Connecting
                   </>
                 ) : (
-                  "Sign in with Internet Identity"
+                  "Sign in"
                 )}
               </Button>
             </div>
@@ -382,20 +300,14 @@ export function Layout() {
 
       <Footer />
 
-      {/* AI Assistant floating button — first-class, always available per "AI is first-class". */}
-      <button
-        type="button"
-        onClick={() => setAiPanelOpen(true)}
-        data-ocid="ai_assistant.fab"
-        aria-label="Open AI assistant"
-        className="fixed bottom-6 right-6 z-40 inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background transition-smooth"
-      >
-        <Sparkles className="w-6 h-6" aria-hidden />
-      </button>
-
-      <AIAssistantPanel
-        isOpen={aiPanelOpen}
-        onClose={() => setAiPanelOpen(false)}
+      <SignInModal
+        open={isSignInModalOpen}
+        onOpenChange={(next) => {
+          if (!next) closeSignInModal();
+        }}
+        onGoogleSignIn={signInWithGoogle}
+        onEmailSignIn={signInWithEmail}
+        isLoggingIn={isLoggingIn}
       />
     </div>
   );

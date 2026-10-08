@@ -4,7 +4,7 @@
 // tools section with three generators and an apply-to-form button.
 
 import { EmptyState } from "@/components/EmptyState";
-import { SkeletonList } from "@/components/Skeleton";
+import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,11 +34,6 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
 import {
-  type UploadedImage,
-  readFileAsUploadedImage,
-  revokePreviewUrl,
-} from "@/hooks/useImageUpload";
-import {
   useCreateListing,
   useDeleteListing,
   useGenerateListingDescription,
@@ -55,10 +50,7 @@ import {
   type ServiceCategory,
   type ServiceListing,
   type ServiceListingInput,
-  TONE_LABELS,
-  type Tone,
 } from "@/types";
-import { ExternalBlob } from "@caffeineai/object-storage";
 import { Link } from "@tanstack/react-router";
 import {
   AlertCircle,
@@ -84,51 +76,6 @@ const ALL_CATEGORIES: ServiceCategory[] = [
 
 const PRICE_UNITS: PriceUnit[] = ["hour", "job", "day", "load"];
 
-const TONES: Tone[] = ["professional", "friendly", "concise"];
-
-// Small "AI-generated" affordance badge used on every AI output surface.
-function AiBadge({ ocid }: { ocid?: string }) {
-  return (
-    <span
-      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-body font-semibold uppercase tracking-wide text-primary"
-      data-ocid={ocid ?? "provider_listings.ai_badge"}
-    >
-      <Sparkles className="w-3 h-3" aria-hidden />
-      AI-generated
-    </span>
-  );
-}
-
-// Compact tone selector reused across the AI tools section.
-function ToneSelect({
-  value,
-  onChange,
-  ocid,
-}: {
-  value: Tone;
-  onChange: (tone: Tone) => void;
-  ocid: string;
-}) {
-  return (
-    <Select value={value} onValueChange={(v) => onChange(v as Tone)}>
-      <SelectTrigger
-        className="h-8 w-[140px] text-xs"
-        aria-label="AI tone"
-        data-ocid={ocid}
-      >
-        <SelectValue placeholder="Tone" />
-      </SelectTrigger>
-      <SelectContent>
-        {TONES.map((tone) => (
-          <SelectItem key={tone} value={tone}>
-            {TONE_LABELS[tone]}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
-
 const DFW_AREAS = [
   "Dallas",
   "Fort Worth",
@@ -149,11 +96,7 @@ interface ListingFormState {
   priceDollars: string;
   priceUnit: PriceUnit;
   serviceArea: string;
-  // Photos carry UploadedImage objects (ExternalBlob + previewUrl + filename)
-  // so freshly uploaded files persist to object storage on submit. Existing
-  // listing photos are wrapped with ExternalBlob.fromURL and the URL reused
-  // as the previewUrl (no transient object URL to revoke).
-  photos: UploadedImage[];
+  photos: string[];
   active: boolean;
 }
 
@@ -189,13 +132,7 @@ function formFromListing(listing: ServiceListing): ListingFormState {
     priceDollars: centsToDollars(listing.priceCents),
     priceUnit: listing.priceUnit,
     serviceArea: listing.serviceArea,
-    // Wrap existing photo URL strings as UploadedImage entries. The URL is
-    // reused as the previewUrl (no transient blob: URL to revoke later).
-    photos: listing.photos.map((url) => ({
-      blob: ExternalBlob.fromURL(url),
-      previewUrl: url,
-      filename: url,
-    })),
+    photos: [...listing.photos],
     active: listing.active,
   };
 }
@@ -207,10 +144,7 @@ function formToInput(form: ListingFormState): ServiceListingInput {
     description: form.description.trim(),
     priceCents: dollarsToCents(form.priceDollars),
     priceUnit: form.priceUnit,
-    // Pass the ExternalBlob through for fresh uploads so bytes survive to
-    // the backend. Existing photos are already ExternalBlob.fromURL wraps,
-    // so passing the blob uniformly works for both cases.
-    photos: form.photos.map((p) => p.blob),
+    photos: form.photos,
     serviceArea: form.serviceArea,
     active: form.active,
   };
@@ -308,10 +242,7 @@ export function ProviderListings() {
         className="container mx-auto px-4 lg:px-6 py-16"
         data-ocid="page.provider_listings"
       >
-        <SkeletonList
-          count={3}
-          className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-        />
+        <LoadingSpinner fullPage label="Loading listings" />
       </div>
     );
   }
@@ -325,7 +256,7 @@ export function ProviderListings() {
         <EmptyState
           icon={AlertCircle}
           title="Sign in to manage listings"
-          description="You need to sign in with Internet Identity to create and edit service listings."
+          description="You need to sign in to create and edit service listings."
           data-ocid="provider_listings.signin_required"
         />
       </div>
@@ -409,10 +340,7 @@ export function ProviderListings() {
             data-ocid="provider_listings.not_approved"
           />
         ) : listingsLoading ? (
-          <SkeletonList
-            count={3}
-            className="grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-          />
+          <LoadingSpinner label="Loading listings" />
         ) : allListings.length === 0 ? (
           <EmptyState
             icon={Plus}
@@ -517,7 +445,7 @@ function ListingCard({ listing, index, onEdit, onDelete }: ListingCardProps) {
   const priceLabel = `$${price.toFixed(2)} / ${PRICE_UNIT_LABELS[listing.priceUnit]}`;
   return (
     <Card
-      className="py-0 flex flex-col animate-fade-in-up animate-card-hover-lift"
+      className="py-0 flex flex-col"
       data-ocid={`provider_listings.item.${index + 1}`}
     >
       {listing.photos[0] ? (
@@ -602,12 +530,6 @@ function ListingForm({
   const [aiBulletPoints, setAiBulletPoints] = useState("");
   const [aiKeywords, setAiKeywords] = useState("");
   const [aiOfferDetails, setAiOfferDetails] = useState("");
-  // Tone selectors for each AI generator. Default to "professional".
-  const [descTone, setDescTone] = useState<Tone>("professional");
-  const [titleTone, setTitleTone] = useState<Tone>("professional");
-  const [promoTone, setPromoTone] = useState<Tone>("professional");
-  // Editable AI output buffers. The user can tweak the AI text in place before
-  // applying it to the form. `generated*` is the live, editable text.
   const [generatedDescription, setGeneratedDescription] = useState("");
   const [generatedTitleTagline, setGeneratedTitleTagline] = useState<string[]>(
     [],
@@ -618,49 +540,24 @@ function ListingForm({
   const generateTitleTagline = useGenerateTitleAndTagline();
   const generatePromo = useGeneratePromotionalContent();
 
-  const onPhotoChange = async (e: ChangeEvent<HTMLInputElement>) => {
+  const onPhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
-    const uploaded = await readFileAsUploadedImage(file);
-    if (!uploaded) {
-      toast.error("Please choose an image file");
-      return;
+    if (file) {
+      const url = URL.createObjectURL(file);
+      onFormChange({ ...form, photos: [...form.photos, url] });
     }
-    onFormChange({ ...form, photos: [...form.photos, uploaded] });
-    // Reset the file input so the same file can be re-selected later.
-    e.target.value = "";
   };
 
   const addPhotoUrl = () => {
     const trimmed = photoUrl.trim();
-    if (!trimmed) return;
-    if (form.photos.some((p) => p.previewUrl === trimmed)) {
-      toast.error("That photo was already added");
-      return;
+    if (trimmed && !form.photos.includes(trimmed)) {
+      onFormChange({ ...form, photos: [...form.photos, trimmed] });
+      setPhotoUrl("");
     }
-    // Wrap the pasted URL as an UploadedImage so the adapter receives an
-    // ExternalBlob. The URL itself is the preview (no transient blob: URL).
-    onFormChange({
-      ...form,
-      photos: [
-        ...form.photos,
-        {
-          blob: ExternalBlob.fromURL(trimmed),
-          previewUrl: trimmed,
-          filename: trimmed,
-        },
-      ],
-    });
-    setPhotoUrl("");
   };
 
-  const removePhoto = (index: number) => {
-    const removed = form.photos[index];
-    if (removed) revokePreviewUrl(removed.previewUrl);
-    onFormChange({
-      ...form,
-      photos: form.photos.filter((_, i) => i !== index),
-    });
+  const removePhoto = (url: string) => {
+    onFormChange({ ...form, photos: form.photos.filter((p) => p !== url) });
   };
 
   const handleGenerateDescription = () => {
@@ -669,18 +566,13 @@ function ListingForm({
       toast.error("Add a few bullet points first");
       return;
     }
-    generateDescription.mutate(
-      { bulletPoints: bullets, category: form.category, tone: descTone },
-      {
-        onSuccess: (desc) => setGeneratedDescription(desc),
-        onError: (err) =>
-          toast.error(
-            err instanceof Error
-              ? err.message
-              : "Could not generate description",
-          ),
-      },
-    );
+    generateDescription.mutate(bullets, {
+      onSuccess: (desc) => setGeneratedDescription(desc),
+      onError: (err) =>
+        toast.error(
+          err instanceof Error ? err.message : "Could not generate description",
+        ),
+    });
   };
 
   const handleGenerateTitleTagline = () => {
@@ -689,16 +581,13 @@ function ListingForm({
       toast.error("Add a few keywords first");
       return;
     }
-    generateTitleTagline.mutate(
-      { keywords, category: form.category },
-      {
-        onSuccess: (results) => setGeneratedTitleTagline(results),
-        onError: (err) =>
-          toast.error(
-            err instanceof Error ? err.message : "Could not generate titles",
-          ),
-      },
-    );
+    generateTitleTagline.mutate(keywords, {
+      onSuccess: (results) => setGeneratedTitleTagline(results),
+      onError: (err) =>
+        toast.error(
+          err instanceof Error ? err.message : "Could not generate titles",
+        ),
+    });
   };
 
   const handleGeneratePromo = () => {
@@ -707,16 +596,13 @@ function ListingForm({
       toast.error("Add offer details first");
       return;
     }
-    generatePromo.mutate(
-      { offerDetails: details, category: form.category, tone: promoTone },
-      {
-        onSuccess: (promo) => setGeneratedPromo(promo),
-        onError: (err) =>
-          toast.error(
-            err instanceof Error ? err.message : "Could not generate promo",
-          ),
-      },
-    );
+    generatePromo.mutate(details, {
+      onSuccess: (promo) => setGeneratedPromo(promo),
+      onError: (err) =>
+        toast.error(
+          err instanceof Error ? err.message : "Could not generate promo",
+        ),
+    });
   };
 
   const applyDescription = () => {
@@ -932,20 +818,20 @@ function ListingForm({
         />
         {form.photos.length > 0 ? (
           <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 mt-1">
-            {form.photos.map((photo, i) => (
+            {form.photos.map((url, i) => (
               <div
-                key={photo.previewUrl}
+                key={url}
                 className="relative aspect-square rounded-lg overflow-hidden border border-border"
                 data-ocid={`provider_listings.photo.${i + 1}`}
               >
                 <img
-                  src={photo.previewUrl}
+                  src={url}
                   alt={`Listing ${i + 1}`}
                   className="w-full h-full object-cover"
                 />
                 <button
                   type="button"
-                  onClick={() => removePhoto(i)}
+                  onClick={() => removePhoto(url)}
                   className="absolute top-1 right-1 w-6 h-6 rounded-full bg-background/80 text-destructive flex items-center justify-center hover:bg-background"
                   aria-label={`Remove photo ${i + 1}`}
                   data-ocid={`provider_listings.remove_photo.${i + 1}`}
@@ -1026,11 +912,6 @@ function ListingForm({
               )}
               Generate
             </Button>
-            <ToneSelect
-              value={descTone}
-              onChange={setDescTone}
-              ocid="provider_listings.ai_desc_tone"
-            />
             {generatedDescription ? (
               <Button
                 type="button"
@@ -1045,19 +926,9 @@ function ListingForm({
           </div>
           {generatedDescription ? (
             <div className="rounded-lg border border-border bg-card p-3 mt-1">
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <AiBadge ocid="provider_listings.ai_desc_badge" />
-                <span className="text-[11px] text-muted-foreground font-body">
-                  Edit before applying
-                </span>
-              </div>
-              <Textarea
-                value={generatedDescription}
-                onChange={(e) => setGeneratedDescription(e.target.value)}
-                rows={5}
-                className="bg-secondary/30 text-sm"
-                data-ocid="provider_listings.ai_desc_output"
-              />
+              <p className="text-sm font-body text-foreground whitespace-pre-wrap">
+                {generatedDescription}
+              </p>
             </div>
           ) : null}
         </div>
@@ -1077,31 +948,23 @@ function ListingForm({
             placeholder="e.g. box truck, same-day, Dallas, apartment move"
             data-ocid="provider_listings.ai_keywords_input"
           />
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={handleGenerateTitleTagline}
-              disabled={generateTitleTagline.isPending}
-              data-ocid="provider_listings.ai_generate_titles"
-            >
-              {generateTitleTagline.isPending ? (
-                <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
-              ) : (
-                <Wand2 className="w-4 h-4" aria-hidden />
-              )}
-              Generate
-            </Button>
-            <ToneSelect
-              value={titleTone}
-              onChange={setTitleTone}
-              ocid="provider_listings.ai_title_tone"
-            />
-          </div>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={handleGenerateTitleTagline}
+            disabled={generateTitleTagline.isPending}
+            data-ocid="provider_listings.ai_generate_titles"
+          >
+            {generateTitleTagline.isPending ? (
+              <Loader2 className="w-4 h-4 animate-spin" aria-hidden />
+            ) : (
+              <Wand2 className="w-4 h-4" aria-hidden />
+            )}
+            Generate
+          </Button>
           {generatedTitleTagline.length > 0 ? (
             <div className="flex flex-col gap-2 mt-1">
-              <AiBadge ocid="provider_listings.ai_titles_badge" />
               {generatedTitleTagline.map((title, i) => (
                 <div
                   key={title}
@@ -1158,11 +1021,6 @@ function ListingForm({
               )}
               Generate
             </Button>
-            <ToneSelect
-              value={promoTone}
-              onChange={setPromoTone}
-              ocid="provider_listings.ai_promo_tone"
-            />
             {generatedPromo ? (
               <Button
                 type="button"
@@ -1177,19 +1035,9 @@ function ListingForm({
           </div>
           {generatedPromo ? (
             <div className="rounded-lg border border-border bg-card p-3 mt-1">
-              <div className="flex items-center justify-between gap-2 mb-2">
-                <AiBadge ocid="provider_listings.ai_promo_badge" />
-                <span className="text-[11px] text-muted-foreground font-body">
-                  Edit before applying
-                </span>
-              </div>
-              <Textarea
-                value={generatedPromo}
-                onChange={(e) => setGeneratedPromo(e.target.value)}
-                rows={5}
-                className="bg-secondary/30 text-sm"
-                data-ocid="provider_listings.ai_promo_output"
-              />
+              <p className="text-sm font-body text-foreground whitespace-pre-wrap">
+                {generatedPromo}
+              </p>
             </div>
           ) : null}
         </div>
